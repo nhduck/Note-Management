@@ -8,7 +8,7 @@ app.use(cors());
 app.use(express.json());
 
 // 1. Database Connection
-const mongoURI = 'mongodb+srv://nhducjob_db_user:IybmBrCS6WjBocYx@cluster0.skdwjrt.mongodb.net/?appName=Cluster0';
+const mongoURI = 'mongodb+srv://nhducjob_db_user:IybmBrCS6WjBocYx@cluster0.skdwjrt.mongodb.net/NoteManagement?retryWrites=true&w=majority&appName=Cluster0';
 mongoose.connect(mongoURI)
     .then(() => console.log('Successfully connected to MongoDB Atlas'))
     .catch(err => console.error('MongoDB connection error:', err));
