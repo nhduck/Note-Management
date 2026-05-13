@@ -1,56 +1,65 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css');
 
 :root {
-  /* --- Brand Colors (Indigo Palette) --- */
+  /* Brand Colors */
   --primary: #4F46E5;
-  --primary-hover: #4338CA;
+  --primary-h: #4338CA;
   --primary-ring: rgba(79, 70, 229, 0.18);
-  --accent: #5147d4; /* Giữ lại tone của Home cho các icon đặc thù */
-  
-  /* --- Functional Colors --- */
+  --accent: #5147d4;
+
+  /* Functional Colors */
   --danger: #EF4444;
   --danger-soft: rgba(239, 68, 68, 0.08);
   --success: #10B981;
-  
-  /* --- Light Mode (Default) --- */
+
+  /* Light Mode */
+  --bg: #EEF2FF;
   --bg-page: #EEF2FF;
   --bg-surface: #FFFFFF;
+  --bg-card: #FFFFFF;
   --bg-nav: #FFFFFF;
+  --text: #0F172A;
+  --text-dark: #0F172A;
   --text-main: #0F172A;
   --text-muted: #64748B;
   --text-hint: #94A3B8;
   --border: #E2E8F0;
-  
-  /* --- Shadows & Effects --- */
+  --shadow: 0 2px 12px rgba(81, 71, 212, 0.08);
+
+  /* Shadows */
   --shadow-card: 0 20px 60px rgba(15, 23, 42, 0.10);
   --shadow-btn: 0 6px 20px rgba(79, 70, 229, 0.32);
   --shadow-sm: 0 2px 12px rgba(81, 71, 212, 0.08);
-  
-  /* --- Border Radius --- */
+
+  /* Border Radius */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 20px;
   --radius-xl: 28px;
   --radius-full: 9999px;
 
-  /* --- Transitions --- */
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* --- Dark Mode Override --- */
+/* Dark Mode Override */
 [data-theme='dark'], .dark {
-  --bg-page: #0F172A;
+  --bg: #0F172A;
+  --bg-page: #13131f;
   --bg-surface: #1E293B;
-  --bg-nav: #1E293B;
+  --bg-card: #1e1e2e;
+  --bg-nav: #1a1a2e;
+  --text: #F8FAFC;
+  --text-dark: #f0f0ff;
   --text-main: #F8FAFC;
-  --text-muted: #94A3B8;
+  --text-muted: #9494b8;
   --text-hint: #64748B;
-  --border: #334155;
+  --border: #2e2e4a;
   --shadow-card: 0 20px 60px rgba(0, 0, 0, 0.3);
+  --shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
   --primary-ring: rgba(99, 102, 241, 0.2);
 }
 
-/* --- Global Base Styles --- */
 * {
   box-sizing: border-box;
   margin: 0;

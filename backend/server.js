@@ -1,23 +1,28 @@
+require('dotenv').config(); // Load environment variables
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 
 const app = express();
-app.use(cors());
+
+// Middleware
 app.use(express.json());
+app.use(cors()); // Enable CORS for frontend integration
 
 // 1. Database Connection
-const mongoURI = 'mongodb+srv://nhducjob_db_user:IybmBrCS6WjBocYx@cluster0.skdwjrt.mongodb.net/NoteManagement?retryWrites=true&w=majority&appName=Cluster0';
+// Use process.env.MONGO_URI in production
+const mongoURI = 'mongodb://nhducjob_db_user:IybmBrCS6WjBocYx@ac-w9ipkd3-shard-00-00.skdwjrt.mongodb.net:27017,ac-w9ipkd3-shard-00-01.skdwjrt.mongodb.net:27017,ac-w9ipkd3-shard-00-02.skdwjrt.mongodb.net:27017/?ssl=true&replicaSet=atlas-8yztb9-shard-0&authSource=admin&appName=Cluster0';
+
 mongoose.connect(mongoURI)
-    .then(() => console.log('Successfully connected to MongoDB Atlas'))
-    .catch(err => console.error('MongoDB connection error:', err));
+    .then(() => console.log('✅ Successfully connected to MongoDB Atlas'))
+    .catch(err => console.error('❌ MongoDB connection error:', err));
 
 // 2. User Schema Definition
 const UserSchema = new mongoose.Schema({
-    username: { type: String, required: true, unique: true },
+    username: { type: String, required: true, unique: true, trim: true },
     password: { type: String, required: true },
-    email: { type: String, required: true, unique: true }
+    email: { type: String, required: true, unique: true, lowercase: true }
 });
 const UserModel = mongoose.model('users', UserSchema);
 
@@ -26,15 +31,13 @@ app.post('/api/register', async (req, res) => {
     try {
         const { username, password, email } = req.body;
 
-        // Check if username already exists
-        const userExists = await UserModel.findOne({ username });
-        if (userExists) return res.status(400).json({ message: "Username already exists!" });
+        // Check if user or email already exists
+        const existingUser = await UserModel.findOne({ $or: [{ username }, { email }] });
+        if (existingUser) {
+            return res.status(400).json({ message: "Username or Email already exists!" });
+        }
 
-        // Check if email already exists
-        const emailExists = await UserModel.findOne({ email });
-        if (emailExists) return res.status(400).json({ message: "Email already registered!" });
-
-        // Hash password before saving
+        // Hash password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -47,7 +50,8 @@ app.post('/api/register', async (req, res) => {
         await newUser.save();
         res.status(201).json({ message: "User registered successfully!" });
     } catch (err) {
-        res.status(500).json({ error: "Internal server error during registration" });
+        console.error(err);
+        res.status(500).json({ error: "Internal server error" });
     }
 });
 
@@ -56,22 +60,21 @@ app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Find user in Database
         const user = await UserModel.findOne({ email });
-        if (!user) return res.status(400).json({ message: "Email does not exist" });
+        if (!user) return res.status(400).json({ message: "Invalid credentials" });
 
-        // Compare input password with hashed password in DB
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
+        // Tip: In a real app, you would generate a JWT (JSON Web Token) here
         res.json({
             message: "Login successful!",
             user: { id: user._id, username: user.username }
         });
     } catch (err) {
-        res.status(500).json({ error: "Internal server error during login" });
+        res.status(500).json({ error: "Internal server error" });
     }
 });
 
-const PORT = 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

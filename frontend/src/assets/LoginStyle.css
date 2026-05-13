@@ -1,4 +1,4 @@
-@import "./rootStyle.css";
+@import "./RootStyle.css";
 
 body {
   font-family: 'Plus Jakarta Sans', sans-serif;
@@ -7,7 +7,7 @@ body {
   min-height: 100vh;
 }
 
-/* ── Layout ── */
+/* Layout */
 .form-side {
   display: flex;
   align-items: center;
@@ -27,6 +27,11 @@ body {
   animation: cardReveal 0.55s ease-out;
 }
 
+@keyframes cardReveal {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .card-title {
   font-size: 1.65rem;
   font-weight: 800;
@@ -34,7 +39,7 @@ body {
   margin-bottom: 0.5rem;
 }
 
-/* ── Form Elements ── */
+/* Form Elements */
 .form-label {
   display: block;
   font-size: 0.8rem;
@@ -65,6 +70,8 @@ body {
   font-size: 0.9rem;
   transition: all 0.2s;
   outline: none;
+  background: var(--bg-surface);
+  color: var(--text);
 }
 
 .form-input:focus {
@@ -89,6 +96,7 @@ body {
   color: var(--text-hint);
   cursor: pointer;
   padding: 5px;
+  font-size: 1rem;
 }
 
 .err-msg {
@@ -98,7 +106,7 @@ body {
   font-weight: 500;
 }
 
-/* ── Button & Loading ── */
+/* Button */
 .btn-submit {
   width: 100%;
   padding: 0.85rem;
@@ -109,6 +117,7 @@ body {
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
+  font-size: 0.95rem;
 }
 
 .btn-submit:hover:not(:disabled) {
@@ -122,7 +131,24 @@ body {
   cursor: not-allowed;
 }
 
-/* ── Responsive ── */
+/* Spinner */
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive */
 @media (max-width: 576px) {
   .login-card {
     padding: 2rem 1.5rem;

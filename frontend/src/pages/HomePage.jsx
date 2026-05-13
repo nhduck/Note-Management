@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import "../assets/HomeStyle.css";
 
 const NOTES = [
@@ -21,13 +21,7 @@ function HomePage() {
   const [profile, setProfile]             = useState({ name: "Alex Johnson", email: "alex@example.com", avatarUrl: "" });
   const [editProfile, setEditProfile]     = useState({ ...profile });
 
-  // Load Bootstrap Icons
-  useEffect(() => {
-    const link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.href = "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css";
-    document.head.appendChild(link);
-  }, []);
+  // Bootstrap Icons are loaded via RootStyle.css
 
   const filteredNotes = NOTES.filter((note) => {
     const q = search.toLowerCase();
