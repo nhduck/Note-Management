@@ -1,3 +1,5 @@
+@import "./rootStyle.css";
+
 /* --- Dark Mode --- */
 .dark {
   --bg-page:   #13131f;
@@ -24,10 +26,16 @@
 /* --- Navbar --- */
 .navbar {
   background: var(--bg-nav);
+  border-bottom: 1px solid var(--border);
   padding: 0 24px;
   height: 64px;
   display: flex;
+  align-items: center;
+  gap: 16px;
   position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow);
 }
 
 .nav-logo {
@@ -35,6 +43,7 @@
   font-size: 20px;
   color: var(--accent);
   display: flex;
+  align-items: center;
   gap: 8px;
 }
 

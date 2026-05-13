@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom"; // 1. Thêm dòng này
 import "../assets/LoginStyle.css";
 
 /* ── Bootstrap Icons Components ────────────────────────── */
@@ -21,6 +22,8 @@ const LoginPage = () => {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const navigate = useNavigate();
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
@@ -34,12 +37,15 @@ const LoginPage = () => {
       setErrors(errs);
       return;
     }
+    
+    setLoading(true);
+
     $.ajax({
       url: "/api/login",
       method: "POST",
       data: form,
       success: (res) => {
-        alert("Login thành công!");
+        navigate("/home");
       },
       error: (err) => {
         setErrors({ email: "Sai thông tin đăng nhập" });
