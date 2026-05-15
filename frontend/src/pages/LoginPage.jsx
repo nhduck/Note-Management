@@ -24,7 +24,7 @@ const LoginPage = () => {
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
   };
 
-  const handleSubmit = (e) => {
+const handleSubmit = (e) => {
     e.preventDefault();
     const errs = validate(form);
     if (Object.keys(errs).length) {
@@ -33,7 +33,7 @@ const LoginPage = () => {
     }
 
     $.ajax({
-      url: "api/login",
+      url: "api/login", 
       type: "POST",
       contentType: "application/json",
       data: JSON.stringify(form),
@@ -46,16 +46,14 @@ const LoginPage = () => {
           localStorage.setItem("user", JSON.stringify(res.user));
         }
 
-        if (res.ok) {
-          navigate("/home");
-        }
+        navigate("/home");
       },
       error: (err) => {
         const message = err.responseJSON?.message || "Login failed. Please try again.";
         setErrors({ password: message });
       }
     });
-  }; // Kết thúc handleSubmit
+  };
 
   return (
     <div className="form-side">

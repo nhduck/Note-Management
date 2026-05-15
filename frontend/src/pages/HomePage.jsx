@@ -12,6 +12,8 @@ function HomePage() {
   const [saveStatus, setSaveStatus] = useState("idle");
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
@@ -35,7 +37,7 @@ function HomePage() {
     return () => clearTimeout(h);
   }, [searchTerm]);
 
-  // Auto-save: kích hoạt khi activeNote thay đổi
+  // Auto-save
   useEffect(() => {
     if (!activeNote || (!activeNote.title && !activeNote.content)) return;
     setSaveStatus("saving");
@@ -69,7 +71,6 @@ function HomePage() {
     } catch { alert("Xóa thất bại!"); }
   };
 
-  // Upload ảnh lên Cloudinary qua API backend → nhận URL
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
@@ -96,7 +97,6 @@ function HomePage() {
       alert("Lỗi kết nối khi upload ảnh.");
     } finally {
       setUploading(false);
-      // Reset input để có thể chọn lại cùng file
       e.target.value = "";
     }
   };
@@ -113,6 +113,51 @@ function HomePage() {
     e.stopPropagation();
     await fetch(`/api/notes/${noteId}/pin`, { method: "PATCH" });
     fetchNotes();
+  };
+
+  // --- HÀM XỬ LÝ PROFILE MENU ---
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    window.location.href = "/";
+  };
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append("images", file);
+
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await res.json();
+
+      if (data.success && data.urls.length > 0) {
+        const newAvatarUrl = data.urls[0];
+
+        // GỌI API CẬP NHẬT DATABASE (Giả định bạn có endpoint này)
+        // await fetch(`/api/users/${profile.id}`, {
+        //   method: "PATCH",
+        //   headers: { "Content-Type": "application/json" },
+        //   body: JSON.stringify({ avatarUrl: newAvatarUrl }),
+        // });
+
+        // Cập nhật state & localStorage
+        const updatedProfile = { ...profile, avatarUrl: newAvatarUrl };
+        setProfile(updatedProfile);
+        localStorage.setItem("user", JSON.stringify(updatedProfile));
+      } else {
+        alert("Tải ảnh thất bại!");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Lỗi khi cập nhật ảnh đại diện.");
+    } finally {
+      setUploadingAvatar(false);
+      e.target.value = "";
+    }
   };
 
   const filteredNotes = notes.filter(n => {
@@ -142,11 +187,61 @@ function HomePage() {
               <i className="bi bi-list-ul" />
             </button>
           </div>
-          <div className="avatar-btn">
-            {profile?.avatarUrl
-              ? <img src={profile.avatarUrl} alt="avatar" />
-              : profile?.username?.charAt(0).toUpperCase() || "U"}
+
+          {/* --- KHU VỰC AVATAR & DROPDOWN MENU --- */}
+          <div className="profile-container" style={{ position: "relative" }}>
+            <div className="avatar-btn" onClick={() => setShowProfileMenu(!showProfileMenu)} style={{ cursor: "pointer" }}>
+              {profile?.avatarUrl
+                ? <img src={profile.avatarUrl} alt="avatar" />
+                : profile?.username?.charAt(0).toUpperCase() || "U"}
+            </div>
+
+            {showProfileMenu && (
+              <>
+                {/* Overlay ẩn để click ra ngoài thì đóng popup */}
+                <div 
+                  style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 99 }} 
+                  onClick={() => setShowProfileMenu(false)} 
+                />
+                
+                {/* Khung Popup */}
+                <div className="profile-popup" style={{
+                  position: "absolute", top: "50px", right: "0", 
+                  background: darkMode ? "#2c2c2c" : "#fff",
+                  color: darkMode ? "#fff" : "#333",
+                  boxShadow: "0 4px 15px rgba(0,0,0,0.15)", borderRadius: "8px", 
+                  padding: "16px", width: "200px", zIndex: 100, 
+                  display: "flex", flexDirection: "column", gap: "12px",
+                  border: darkMode ? "1px solid #444" : "1px solid #eee"
+                }}>
+                  {/* Tên User */}
+                  <div style={{ textAlign: "center", fontWeight: "bold", fontSize: "16px", paddingBottom: "8px", borderBottom: darkMode ? "1px solid #444" : "1px solid #eee" }}>
+                    {profile?.username || "Người dùng"}
+                  </div>
+
+                  {/* Nút đổi Avatar */}
+                  <label style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "10px", fontSize: "14px" }}>
+                    {uploadingAvatar 
+                      ? <i className="bi bi-arrow-repeat spin" /> 
+                      : <i className="bi bi-camera-fill" style={{ color: "#5147d4" }}/>
+                    }
+                    {uploadingAvatar ? "Đang tải..." : "Đổi ảnh đại diện"}
+                    <input type="file" accept="image/*" hidden onChange={handleAvatarChange} disabled={uploadingAvatar} />
+                  </label>
+
+                  {/* Nút Đăng xuất */}
+                  <button onClick={handleLogout} style={{
+                    cursor: "pointer", display: "flex", alignItems: "center", gap: "10px", fontSize: "14px",
+                    background: "none", border: "none", color: "#dc3545", padding: "0", textAlign: "left", marginTop: "4px"
+                  }}>
+                    <i className="bi bi-box-arrow-right" /> Đăng xuất
+                  </button>
+                </div>
+              </>
+            )}
           </div>
+          {/* --- KẾT THÚC KHU VỰC AVATAR --- */}
+
         </div>
       </nav>
 
