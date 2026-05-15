@@ -38,13 +38,16 @@ const LoginPage = () => {
       contentType: "application/json",
       data: JSON.stringify(form),
       success: (res) => {
+        localStorage.setItem("token", res.token);
+        localStorage.setItem("user", JSON.stringify(res.user));
+
         navigate("/home");
       },
       error: (err) => {
         const message = err.responseJSON?.message || "Login failed. Please try again.";
         setErrors({ password: message });
       }
-    })
+    });
   };
 
   return (
