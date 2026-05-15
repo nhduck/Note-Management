@@ -3,18 +3,21 @@ import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import HomePage from './pages/HomePage.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
+import ForgotPassPage from './pages/FogotPassPage.jsx';
+import VerifyOtpPage from './pages/VerifyOtpPage.jsx';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        
-        {/* THÊM DÒNG NÀY: Tự động chuyển hướng từ "/" sang "/home" */}
-        <Route path="/" element={<Navigate to="/Login" replace />} />
+        {/* Tự động chuyển hướng từ "/" sang "/login" */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
 
-        {/* Các Public Route */}
+        {/* Public Routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgotPassword" element={<ForgotPassPage />} />
+        <Route path="/verify-otp" element={<VerifyOtpPage />} />
 
         {/* Protected Route */}
         <Route
@@ -25,7 +28,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-        
       </Routes>
     </BrowserRouter>
   );

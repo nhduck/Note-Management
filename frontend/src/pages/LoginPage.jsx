@@ -112,7 +112,7 @@ const handleSubmit = (e) => {
               </p>
             )}
             <div className="text-end small">
-              <Link to="/FogotPassPage" className="text-decoration-none">Forgot Password</Link>
+              <Link to="/forgotPassword" className="text-decoration-none">Forgot Password</Link>
             </div>
           </div>
 

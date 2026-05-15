@@ -7,8 +7,16 @@ const bcrypt = require('bcryptjs');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
-
 const app = express();
+const nodemailer = require('nodemailer');
+
+const transporter = nodemailer.createTransport({
+    service: 'gmail', // or your preferred provider
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+    },
+});
 
 // ── Middleware ───────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }));
@@ -44,7 +52,11 @@ const User = mongoose.model('User', new mongoose.Schema({
     password:  { type: String, required: true },
     email:     { type: String, required: true, unique: true },
     avatarUrl: { type: String, default: null },
-}));
+    isVerified: { type: Boolean, default: false },
+    verificationToken: String,
+    resetPasswordToken: String,
+    resetPasswordExpires: Date
+}, { timestamps: true }));
 
 // Token (session) — TTL index tự xóa token hết hạn
 const TokenSchema = new mongoose.Schema({
@@ -55,7 +67,7 @@ const TokenSchema = new mongoose.Schema({
 TokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 const Token = mongoose.model('Token', TokenSchema);
 
-// Label — mỗi user có bộ nhãn riêng, tên unique trong phạm vi user
+// Label
 const LabelSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     name:   { type: String, required: true, trim: true },
@@ -108,11 +120,98 @@ app.post('/api/register', async (req, res) => {
         if (existing) return res.status(400).json({ message: 'Username hoặc Email đã tồn tại!' });
 
         const hashed = await bcrypt.hash(password, 10);
-        const user   = await User.create({ username, password: hashed, email });
-        res.status(201).json({ success: true, user: { id: user._id, username: user.username } });
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+        await User.create({
+            username,
+            password: hashed,
+            email,
+            verificationToken: otpCode
+        });
+
+        transporter.sendMail({
+            from: `"NoteSpace" <${process.env.EMAIL_USER}>`,
+            to: email,
+            subject: 'Mã xác nhận tài khoản của bạn',
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; border: 1px solid #eee; padding: 20px;">
+                    <h2>Xác nhận tài khoản NoteSpace</h2>
+                    <p>Chào ${username}, mã xác nhận của bạn là:</p>
+                    <h1 style="color: #4CAF50; letter-spacing: 5px;">${otpCode}</h1>
+                    <p>Mã này dùng để kích hoạt tài khoản của bạn. Vui lòng không chia sẻ cho bất kỳ ai.</p>
+                </div>
+            `
+        });
+
+        res.status(201).json({ success: true, message: 'Mã xác nhận đã được gửi vào Email!' });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Đăng ký thất bại' });
+    }
+});
+
+// Xác thực OTP — xử lý cả 2 luồng: đăng ký (register) và quên mật khẩu (reset)
+app.post('/api/verify-otp', async (req, res) => {
+    try {
+        const { email, otp, type } = req.body;
+        const user = await User.findOne({ email });
+
+        if (!user) return res.status(404).json({ message: 'Email không tồn tại.' });
+
+        if (type === 'reset') {
+            // Luồng quên mật khẩu: kiểm tra resetPasswordToken và thời hạn
+            if (user.resetPasswordToken !== otp) {
+                return res.status(400).json({ message: 'Mã xác nhận không đúng.' });
+            }
+            if (!user.resetPasswordExpires || new Date() > user.resetPasswordExpires) {
+                return res.status(400).json({ message: 'Mã đã hết hạn. Vui lòng yêu cầu lại.' });
+            }
+            // Giữ nguyên token, để endpoint reset-password xác thực lại trước khi đổi mật khẩu
+            return res.json({ success: true, message: 'Xác thực thành công!' });
+        } else {
+            // Luồng đăng ký: kiểm tra verificationToken
+            if (user.verificationToken !== otp) {
+                return res.status(400).json({ message: 'Mã xác nhận không đúng hoặc đã hết hạn.' });
+            }
+            user.isVerified = true;
+            user.verificationToken = undefined;
+            await user.save();
+            return res.json({ success: true, message: 'Xác thực tài khoản thành công!' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: 'Lỗi hệ thống khi xác thực' });
+    }
+});
+
+// Gửi lại OTP đăng ký
+app.post('/api/resend-otp', async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ email });
+
+        if (!user) return res.status(404).json({ message: 'Không tìm thấy email.' });
+
+        const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+        user.verificationToken = newOtp;
+        await user.save();
+
+        await transporter.sendMail({
+            from: `"NoteSpace" <${process.env.EMAIL_USER}>`,
+            to: email,
+            subject: 'Gửi lại mã xác nhận',
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; border: 1px solid #eee; padding: 20px;">
+                    <h2>NoteSpace - Gửi lại mã xác nhận</h2>
+                    <p>Mã xác nhận mới của bạn là:</p>
+                    <h1 style="color: #4CAF50; letter-spacing: 5px;">${newOtp}</h1>
+                    <p>Vui lòng không chia sẻ mã này cho bất kỳ ai.</p>
+                </div>
+            `
+        });
+
+        res.json({ success: true, message: 'Mã mới đã được gửi!' });
+    } catch (err) {
+        res.status(500).json({ error: 'Không thể gửi lại mã' });
     }
 });
 
@@ -121,18 +220,22 @@ app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body;
         const user = await User.findOne({ email });
+
         if (!user || !(await bcrypt.compare(password, user.password)))
             return res.status(401).json({ message: 'Email hoặc mật khẩu không đúng' });
 
-        const token     = crypto.randomBytes(64).toString('hex');
-        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+        if (!user.isVerified) {
+            return res.status(403).json({
+                message: 'Tài khoản chưa được xác thực!',
+                unverified: true
+            });
+        }
+
+        const token = crypto.randomBytes(64).toString('hex');
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
         await Token.create({ userId: user._id, token, expiresAt });
 
-        res.json({
-            success: true,
-            token,
-            user: { id: user._id, username: user.username, avatarUrl: user.avatarUrl },
-        });
+        res.json({ success: true, token, user: { id: user._id, username: user.username } });
     } catch (err) {
         res.status(500).json({ error: 'Đăng nhập thất bại' });
     }
@@ -148,6 +251,71 @@ app.get('/api/verify-token', async (req, res) => {
         res.json({ valid: true, userId: record.userId });
     } catch (err) {
         res.status(500).json({ error: 'Token verification failed' });
+    }
+});
+
+// Quên mật khẩu — tạo OTP và gửi email
+app.post('/api/forgot-password', async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(404).json({ message: 'Email này chưa được đăng ký!' });
+        }
+
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+        user.resetPasswordToken = otpCode;
+        user.resetPasswordExpires = new Date(Date.now() + 10 * 60 * 1000); // hết hạn sau 10 phút
+        await user.save();
+
+        await transporter.sendMail({
+            from: `"NoteSpace" <${process.env.EMAIL_USER}>`,
+            to: email,
+            subject: 'Mã khôi phục mật khẩu',
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; border: 1px solid #eee; padding: 20px;">
+                    <h2>NoteSpace - Khôi phục mật khẩu</h2>
+                    <p>Mã khôi phục mật khẩu của bạn là:</p>
+                    <h1 style="color: #ff4757; letter-spacing: 5px;">${otpCode}</h1>
+                    <p>Mã này có hiệu lực trong <strong>10 phút</strong>. Vui lòng không chia sẻ cho bất kỳ ai.</p>
+                </div>
+            `
+        });
+
+        res.json({ success: true, message: 'Mã đã được gửi về email của bạn.' });
+    } catch (err) {
+        res.status(500).json({ error: 'Lỗi hệ thống' });
+    }
+});
+
+// Đặt lại mật khẩu — xác thực lại OTP trước khi đổi
+app.post('/api/reset-password', async (req, res) => {
+    try {
+        const { email, otp, newPassword } = req.body;
+        const user = await User.findOne({ email });
+
+        if (!user) return res.status(404).json({ message: 'Email không tồn tại.' });
+
+        if (user.resetPasswordToken !== otp) {
+            return res.status(400).json({ message: 'Mã xác nhận không đúng.' });
+        }
+        if (!user.resetPasswordExpires || new Date() > user.resetPasswordExpires) {
+            return res.status(400).json({ message: 'Mã đã hết hạn. Vui lòng yêu cầu lại.' });
+        }
+        if (!newPassword || newPassword.length < 6) {
+            return res.status(400).json({ message: 'Mật khẩu phải có ít nhất 6 ký tự.' });
+        }
+
+        user.password = await bcrypt.hash(newPassword, 10);
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+        await user.save();
+
+        res.json({ success: true, message: 'Đặt lại mật khẩu thành công!' });
+    } catch (err) {
+        res.status(500).json({ error: 'Lỗi hệ thống khi đặt lại mật khẩu' });
     }
 });
 
@@ -250,7 +418,7 @@ app.delete('/api/notes/:id', async (req, res) => {
     }
 });
 
-// Ghim / bỏ ghim — lưu pinnedAt để sort đúng thứ tự ghim
+// Ghim / bỏ ghim
 app.patch('/api/notes/:id/pin', async (req, res) => {
     try {
         const note = await Note.findById(req.params.id);
@@ -318,7 +486,7 @@ app.post('/api/labels', async (req, res) => {
     }
 });
 
-// Đổi tên nhãn — note gắn nhãn này tự cập nhật vì dùng ObjectId ref + populate
+// Đổi tên nhãn
 app.put('/api/labels/:id', async (req, res) => {
     try {
         const { name, userId } = req.body;
@@ -335,7 +503,7 @@ app.put('/api/labels/:id', async (req, res) => {
     }
 });
 
-// Xóa nhãn — KHÔNG xóa ghi chú, chỉ gỡ labelId khỏi các note (theo đề)
+// Xóa nhãn — chỉ gỡ khỏi các note, không xóa note
 app.delete('/api/labels/:id', async (req, res) => {
     try {
         const label = await Label.findByIdAndDelete(req.params.id);
