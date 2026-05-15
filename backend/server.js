@@ -26,6 +26,63 @@ const UserSchema = new mongoose.Schema({
 });
 const UserModel = mongoose.model('users', UserSchema);
 
+const NoteSchema = new mongoose.Schema({
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'users', required: true },
+    title: { type: String, required: true },
+    content: { type: String, required: true },
+    images: [String], // để chứa ảnh
+    isPinned: { type: Boolean, default: false },
+    password: { type: String, default: null }, // Cho tính năng khóa ghi chú
+    labels: [String],
+}, { timestamps: true }); // phục vụ cho xắp xếp
+
+const NoteModel = mongoose.model('notes', NoteSchema);
+
+app.post('/api/notes/save', async (req, res) => {
+    try {
+        const { noteId, title, content, images, userId } = req.body;
+        const noteData = { title, content, images, userId };
+        
+        let note;
+        if (noteId) {
+            note = await NoteModel.findByIdAndUpdate(noteId, noteData, { new: true });
+        } else {
+            note = new NoteModel(noteData);
+            await note.save();
+        }
+        
+        res.json({ success: true, note });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Lỗi hệ thống khi lưu ghi chú" });
+    }
+});
+
+// --- API: Lấy danh sách ghi chú ---
+app.get('/api/notes', async (req, res) => {
+    try {
+        const { userId } = req.query;
+        if (!userId) return res.status(400).json({ error: "Thiếu userId" });
+        
+        // Sắp xếp: isPinned giảm dần, updatedAt giảm dần (ghi chú mới lên đầu)
+        const notes = await NoteModel.find({ userId }).sort({ isPinned: -1, updatedAt: -1 });
+        res.json({ notes });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Lỗi khi tải danh sách ghi chú" });
+    }
+});
+
+// --- API: Xóa ghi chú ---
+app.delete('/api/notes/:id', async (req, res) => {
+    try {
+        await NoteModel.findByIdAndDelete(req.params.id);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: "Lỗi khi xóa ghi chú" });
+    }
+});
+
 // --- REGISTER API ---
 app.post('/api/register', async (req, res) => {
     try {
