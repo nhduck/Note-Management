@@ -38,17 +38,24 @@ const LoginPage = () => {
       contentType: "application/json",
       data: JSON.stringify(form),
       success: (res) => {
-        localStorage.setItem("token", res.token);
-        localStorage.setItem("user", JSON.stringify(res.user));
+        if (res.token) {
+          localStorage.setItem("token", res.token);
+        }
 
-        navigate("/home");
+        if (res.user) {
+          localStorage.setItem("user", JSON.stringify(res.user));
+        }
+
+        if (res.ok) {
+          navigate("/home");
+        }
       },
       error: (err) => {
         const message = err.responseJSON?.message || "Login failed. Please try again.";
         setErrors({ password: message });
       }
     });
-  };
+  }; // Kết thúc handleSubmit
 
   return (
     <div className="form-side">
