@@ -43,6 +43,7 @@ const LoginPage = () => {
       const data = await res.json();
 
       if (res.ok) {
+        localStorage.setItem("user", JSON.stringify(data.user));
         navigate("/home");
       } else {
         setErrors({ email: data.message || "Invalid credentials." });
