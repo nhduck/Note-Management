@@ -1,5 +1,6 @@
 require('dotenv').config();
 
+const crypto = require('crypto');
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -18,7 +19,7 @@ app.use(cors());
 // ── Cloudinary Config ───────────────────────────────────
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key:    process.env.CLOUDINARY_API_KEY,
+    api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
@@ -32,7 +33,7 @@ const storage = new CloudinaryStorage({
 const upload = multer({ storage });
 
 // ── MongoDB ─────────────────────────────────────────────
-mongoose.connect(process.env.MONGO_URI)
+mongoose.connect('mongodb://nhducjob_db_user:IybmBrCS6WjBocYx@ac-w9ipkd3-shard-00-00.skdwjrt.mongodb.net:27017,ac-w9ipkd3-shard-00-01.skdwjrt.mongodb.net:27017,ac-w9ipkd3-shard-00-02.skdwjrt.mongodb.net:27017/?ssl=true&replicaSet=atlas-8yztb9-shard-0&authSource=admin&appName=Cluster0')
     .then(() => console.log('✅ Connected to MongoDB Atlas'))
     .catch(err => console.error('❌ MongoDB error:', err));
 
@@ -40,18 +41,57 @@ mongoose.connect(process.env.MONGO_URI)
 const UserSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true, trim: true },
     password: { type: String, required: true },
-    email:    { type: String, required: true, unique: true, lowercase: true },
+    email: { type: String, required: true, unique: true, lowercase: true },
 });
 const UserModel = mongoose.model('users', UserSchema);
 
+const tokenSchema = new mongoose.Schema({
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+        index: true
+    },
+
+    token: {
+        type: String,
+        required: true,
+        unique: true
+    },
+
+    type: {
+        type: String,
+        enum: ['REFRESH', 'RESET_PASSWORD', 'VERIFY_EMAIL'],
+        default: 'REFRESH',
+        required: true
+    },
+
+    deviceInfo: {
+        browser: String,
+        os: String,
+        ip: String
+    },
+
+    expiresAt: {
+        type: Date,
+        required: true
+    }
+}, {
+    timestamps: true
+});
+
+tokenSchema.index({ "expiresAt": 1 }, { expireAfterSeconds: 0 });
+
+const Token = mongoose.model('Token', tokenSchema);
+
 const NoteSchema = new mongoose.Schema({
-    userId:     { type: mongoose.Schema.Types.ObjectId, ref: 'users', required: true },
-    title:      { type: String, required: true },
-    content:    { type: String, default: '' },
-    images:     [String],
-    isPinned:   { type: Boolean, default: false },
-    password:   { type: String, default: null },
-    labels:     [String],
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'users', required: true },
+    title: { type: String, required: true },
+    content: { type: String, default: '' },
+    images: [String],
+    isPinned: { type: Boolean, default: false },
+    password: { type: String, default: null },
+    labels: [String],
     sharedWith: [{ type: String }],
 }, { timestamps: true });
 const NoteModel = mongoose.model('notes', NoteSchema);
@@ -159,14 +199,31 @@ app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body;
         const user = await UserModel.findOne({ email });
-        if (!user) return res.status(400).json({ message: 'Email hoặc mật khẩu không đúng' });
+        
+        if (!user || !(await bcrypt.compare(password, user.password))) {
+            return res.status(400).json({ message: 'Sai thông tin đăng nhập' });
+        }
 
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ message: 'Email hoặc mật khẩu không đúng' });
+        const sessionToken = crypto.randomBytes(64).toString('hex');
+
+        const expiresAt = new Date();
+        expiresAt.setHours(expiresAt.getHours() + 24);
+
+        await Token.create({
+            userId: user._id,
+            token: sessionToken,
+            type: 'REFRESH',
+            deviceInfo: {
+                browser: req.headers['user-agent'],
+                ip: req.ip
+            },
+            expiresAt: expiresAt
+        });
 
         res.json({
             message: 'Đăng nhập thành công!',
             user: { id: user._id, username: user.username },
+            token: sessionToken
         });
     } catch (err) {
         res.status(500).json({ error: 'Lỗi hệ thống' });
