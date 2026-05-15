@@ -58,8 +58,10 @@ const RegisterPage = () => {
       const data = await res.json();
 
       if (res.ok) {
-        setSuccessMsg("Account created successfully! Redirecting to login...");
-        setTimeout(() => navigate("/"), 2000);
+        setSuccessMsg("Account created successfully!");
+        setTimeout(() => {
+          navigate("/verify-otp", { state: { email: form.email, type: "register" } }); 
+        }, 2000);
       } else {
         setErrors({ email: data.message || "Registration failed." });
       }
