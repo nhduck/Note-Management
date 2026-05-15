@@ -4,7 +4,7 @@ body {
   font-family: 'Plus Jakarta Sans', sans-serif;
   background: var(--bg);
   color: var(--text);
-  min-height: 800px; 
+  min-height: 800px;
 }
 
 /* Layout */
@@ -16,7 +16,7 @@ body {
   min-height: 800px;
 }
 
-.login-card {
+.forgot-card {
   background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(24px);
   border-radius: 16px;
@@ -25,6 +25,7 @@ body {
   max-width: 440px;
   box-shadow: var(--shadow-card);
   animation: cardReveal 0.55s ease-out;
+  text-align: center;
 }
 
 @keyframes cardReveal {
@@ -32,14 +33,38 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* Icon */
+.icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  background: var(--primary-ring);
+  border-radius: 16px;
+  margin-bottom: 20px;
+  font-size: 28px;
+  color: var(--primary);
+}
+
 .card-title {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 800;
-  letter-spacing: -1px;
+  letter-spacing: -0.5px;
   margin-bottom: 8px;
 }
 
+.card-subtitle {
+  font-size: 14px;
+  margin-bottom: 28px;
+  line-height: 1.6;
+}
+
 /* Form Elements */
+.form-group {
+  text-align: left;
+}
+
 .form-label {
   display: block;
   font-size: 13px;
@@ -58,12 +83,10 @@ body {
   left: 14px;
   top: 50%;
   transform: translateY(-50%);
-  
   color: var(--text-hint);
   font-size: 18px;
   pointer-events: none;
   transition: color 0.2s;
-  margin-right: 0px;
   z-index: 2;
 }
 
@@ -94,35 +117,30 @@ body {
   color: var(--primary);
 }
 
-.pass-toggle {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: var(--text-hint);
-  cursor: pointer;
-  padding: 5px;
-  font-size: 16px;
-}
-
 .err-msg {
   font-size: 12px;
   color: var(--danger);
   margin-top: 6px;
   font-weight: 500;
+  text-align: left;
 }
 
 /* Button */
 .btn-submit {
   width: 100%;
+  padding: 14px;
   background: var(--primary);
+  border: none;
   border-radius: 8px;
   color: white;
   font-weight: 700;
   cursor: pointer;
+  transition: all 0.2s;
   font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .btn-submit:hover:not(:disabled) {
@@ -136,9 +154,70 @@ body {
   cursor: not-allowed;
 }
 
+/* Back link */
+.back-link {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-hint);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s;
+}
+
+.back-link:hover {
+  color: var(--primary);
+}
+
+/* Success state */
+.success-state {
+  animation: cardReveal 0.45s ease-out;
+}
+
+.success-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  background: #e6faf0;
+  border-radius: 16px;
+  margin-bottom: 20px;
+  font-size: 28px;
+  color: #22c55e;
+}
+
+.email-highlight {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.resend-text {
+  font-size: 13px;
+  margin-top: 16px;
+}
+
+.resend-btn {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  transition: opacity 0.2s;
+}
+
+.resend-btn:hover {
+  opacity: 0.75;
+  text-decoration: underline;
+}
+
 /* Responsive */
 @media (max-width: 576px) {
-  .login-card {
+  .forgot-card {
     padding: 32px 24px;
     margin: 16px;
   }

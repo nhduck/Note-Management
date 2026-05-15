@@ -15,7 +15,6 @@ const LoginPage = () => {
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [showPass, setShowPass] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
@@ -25,7 +24,7 @@ const LoginPage = () => {
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     const errs = validate(form);
     if (Object.keys(errs).length) {
@@ -33,25 +32,19 @@ const LoginPage = () => {
       return;
     }
 
-    setLoading(true);
-    try {
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
-
-      if (res.ok) {
+    $.ajax({
+      url: "api/login",
+      type: "POST",
+      contentType: "application/json",
+      data: JSON.stringify(form),
+      success: (res) => {
         navigate("/home");
-      } else {
-        setErrors({ email: data.message || "Invalid credentials." });
+      },
+      error: (err) => {
+        const message = err.responseJSON?.message || "Login failed. Please try again.";
+        setErrors({ password: message });
       }
-    } catch (err) {
-      setErrors({ email: "Server error. Please try again." });
-    } finally {
-      setLoading(false);
-    }
+    })
   };
 
   return (
@@ -84,7 +77,7 @@ const LoginPage = () => {
           </div>
 
           {/* Password */}
-          <div className="form-group mb-4">
+          <div className="form-group mb-3">
             <label className="form-label" htmlFor="password">Password</label>
             <div className="input-wrap">
               <i className="bi bi-lock i-icon" aria-hidden="true"></i>
@@ -110,14 +103,13 @@ const LoginPage = () => {
                 <i className="bi bi-exclamation-circle"></i> {errors.password}
               </p>
             )}
+            <div className="text-end small">
+              <Link to="/FogotPassPage" className="text-decoration-none">Forgot Password</Link>
+            </div>
           </div>
 
-          <button type="submit" className="btn-submit" disabled={loading}>
-            {loading ? (
-              <><span className="spinner"></span>Logging in...</>
-            ) : (
-              <>Login <i className="bi bi-arrow-right-short"></i></>
-            )}
+          <button type="submit" className="btn-submit">
+            Login <i className="bi bi-arrow-right-short"></i>
           </button>
         </form>
 
