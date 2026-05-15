@@ -1,79 +1,179 @@
-require('dotenv').config(); // Load environment variables
+require('dotenv').config();
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const multer = require('multer');
 
 const app = express();
 
-// Middleware
-app.use(express.json());
-app.use(cors()); // Enable CORS for frontend integration
+// ── Middleware ──────────────────────────────────────────
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(cors());
 
-// 1. Database Connection
-// Use process.env.MONGO_URI in production
-const mongoURI = 'mongodb://nhducjob_db_user:IybmBrCS6WjBocYx@ac-w9ipkd3-shard-00-00.skdwjrt.mongodb.net:27017,ac-w9ipkd3-shard-00-01.skdwjrt.mongodb.net:27017,ac-w9ipkd3-shard-00-02.skdwjrt.mongodb.net:27017/?ssl=true&replicaSet=atlas-8yztb9-shard-0&authSource=admin&appName=Cluster0';
+// ── Cloudinary Config ───────────────────────────────────
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key:    process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-mongoose.connect(mongoURI)
-    .then(() => console.log('✅ Successfully connected to MongoDB Atlas'))
-    .catch(err => console.error('❌ MongoDB connection error:', err));
+const storage = new CloudinaryStorage({
+    cloudinary,
+    params: {
+        folder: 'notespace',
+        allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+    },
+});
+const upload = multer({ storage });
 
-// 2. User Schema Definition
+// ── MongoDB ─────────────────────────────────────────────
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('✅ Connected to MongoDB Atlas'))
+    .catch(err => console.error('❌ MongoDB error:', err));
+
+// ── Schemas ─────────────────────────────────────────────
 const UserSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true, trim: true },
     password: { type: String, required: true },
-    email: { type: String, required: true, unique: true, lowercase: true }
+    email:    { type: String, required: true, unique: true, lowercase: true },
 });
 const UserModel = mongoose.model('users', UserSchema);
 
-// --- REGISTER API ---
+const NoteSchema = new mongoose.Schema({
+    userId:     { type: mongoose.Schema.Types.ObjectId, ref: 'users', required: true },
+    title:      { type: String, required: true },
+    content:    { type: String, default: '' },
+    images:     [String],
+    isPinned:   { type: Boolean, default: false },
+    password:   { type: String, default: null },
+    labels:     [String],
+    sharedWith: [{ type: String }],
+}, { timestamps: true });
+const NoteModel = mongoose.model('notes', NoteSchema);
+
+// ── API: Upload ảnh lên Cloudinary ──────────────────────
+// Nhận file ảnh, trả về URL
+app.post('/api/upload', (req, res) => {
+    upload.array('images', 10)(req, res, (err) => {
+        if (err) {
+            console.error('Multer/Cloudinary error:', err);
+            return res.status(500).json({ error: 'Lỗi upload: ' + err.message });
+        }
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({ error: 'Không có file nào được gửi lên' });
+        }
+        try {
+            const urls = req.files.map(f => f.path);
+            res.json({ success: true, urls });
+        } catch (e) {
+            console.error(e);
+            res.status(500).json({ error: 'Upload ảnh thất bại: ' + e.message });
+        }
+    });
+});
+
+// ── API: Lưu ghi chú ────────────────────────────────────
+app.post('/api/notes/save', async (req, res) => {
+    try {
+        const { noteId, title, content, images, userId } = req.body;
+        const noteData = { title, content: content || '', images: images || [], userId };
+
+        let note;
+        if (noteId) {
+            note = await NoteModel.findByIdAndUpdate(noteId, noteData, { new: true });
+        } else {
+            note = new NoteModel(noteData);
+            await note.save();
+        }
+        res.json({ success: true, note });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Lỗi khi lưu ghi chú' });
+    }
+});
+
+// ── API: Lấy danh sách ghi chú ──────────────────────────
+app.get('/api/notes', async (req, res) => {
+    try {
+        const { userId } = req.query;
+        if (!userId) return res.status(400).json({ error: 'Thiếu userId' });
+        const notes = await NoteModel.find({ userId }).sort({ isPinned: -1, updatedAt: -1 });
+        res.json({ notes });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Lỗi khi tải ghi chú' });
+    }
+});
+
+// ── API: Xóa ghi chú ────────────────────────────────────
+app.delete('/api/notes/:id', async (req, res) => {
+    try {
+        await NoteModel.findByIdAndDelete(req.params.id);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: 'Lỗi khi xóa ghi chú' });
+    }
+});
+
+// ── API: Ghim / Bỏ ghim ghi chú ─────────────────────────
+app.patch('/api/notes/:id/pin', async (req, res) => {
+    try {
+        const note = await NoteModel.findById(req.params.id);
+        if (!note) return res.status(404).json({ error: 'Không tìm thấy ghi chú' });
+        note.isPinned = !note.isPinned;
+        await note.save();
+        res.json({ success: true, isPinned: note.isPinned });
+    } catch (err) {
+        res.status(500).json({ error: 'Lỗi khi ghim ghi chú' });
+    }
+});
+
+// API: Đăng ký
 app.post('/api/register', async (req, res) => {
     try {
         const { username, password, email } = req.body;
+        const existing = await UserModel.findOne({ $or: [{ username }, { email }] });
+        if (existing) return res.status(400).json({ message: 'Username hoặc Email đã tồn tại!' });
 
-        // Check if user or email already exists
-        const existingUser = await UserModel.findOne({ $or: [{ username }, { email }] });
-        if (existingUser) {
-            return res.status(400).json({ message: "Username or Email already exists!" });
-        }
-
-        // Hash password
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        const newUser = new UserModel({
-            email,
-            username,
-            password: hashedPassword
-        });
-
+        const hashed = await bcrypt.hash(password, 10);
+        const newUser = new UserModel({ email, username, password: hashed });
         await newUser.save();
-        res.status(201).json({ message: "User registered successfully!" });
+
+        res.status(201).json({
+            message: 'Đăng ký thành công!',
+            user: { id: newUser._id, username: newUser.username },
+        });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: "Internal server error" });
+        res.status(500).json({ error: 'Lỗi hệ thống' });
     }
 });
 
-// --- LOGIN API ---
+// API: Đăng nhập
 app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-
         const user = await UserModel.findOne({ email });
-        if (!user) return res.status(400).json({ message: "Invalid credentials" });
+        if (!user) return res.status(400).json({ message: 'Email hoặc mật khẩu không đúng' });
 
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+        if (!isMatch) return res.status(400).json({ message: 'Email hoặc mật khẩu không đúng' });
 
         res.json({
-            message: "Login successful!",
-            user: { id: user._id, username: user.username }
+            message: 'Đăng nhập thành công!',
+            user: { id: user._id, username: user.username },
         });
     } catch (err) {
-        res.status(500).json({ error: "Internal server error" });
+        res.status(500).json({ error: 'Lỗi hệ thống' });
     }
 });
 
+// Khởi động server
+// PORT lấy từ .env
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server đang chạy tại cổng ${PORT}`));
