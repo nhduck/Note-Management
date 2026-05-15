@@ -1,0 +1,247 @@
+/* ════════════════════════════════════
+   MODAL OVERLAY (shared)
+════════════════════════════════════ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  backdrop-filter: blur(2px);
+}
+
+/* ════════════════════════════════════
+   EDITOR MODAL
+════════════════════════════════════ */
+.editor-modal {
+  background: var(--bg-card);
+  border-radius: 20px;
+  width: 580px;
+  max-width: 95vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.18), 0 0 0 1px var(--border);
+  animation: modal-pop 0.22s cubic-bezier(0.34,1.56,0.64,1);
+  overflow: hidden;
+}
+@keyframes modal-pop {
+  from { opacity: 0; transform: scale(0.93) translateY(12px); }
+  to   { opacity: 1; transform: scale(1)   translateY(0); }
+}
+
+.editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.editor-header-left { display: flex; align-items: center; gap: 10px; }
+.editor-icon-wrap {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: var(--primary-ring);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--accent);
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.editor-header-label { font-weight: 700; font-size: 15px; color: var(--text-dark); }
+.editor-close-btn {
+  width: 34px; height: 34px;
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.editor-close-btn:hover { background: var(--danger-soft); color: var(--danger); border-color: var(--danger); }
+
+.editor-body {
+  padding: 20px 24px;
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+}
+.editor-field   { display: flex; flex-direction: column; gap: 6px; }
+.editor-field--grow { flex: 1; min-height: 0; }
+.editor-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.editor-title {
+  padding: 11px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-page);
+  color: var(--text-dark);
+  font-size: 15px;
+  font-weight: 600;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+}
+.editor-title:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--primary-ring); }
+
+.editor-content {
+  flex: 1;
+  min-height: 160px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-page);
+  color: var(--text-dark);
+  font-size: 14px;
+  line-height: 1.6;
+  outline: none;
+  resize: none;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+}
+.editor-content:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--primary-ring); }
+
+/* Nhãn đã gắn trong editor */
+.editor-labels-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.editor-label-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: var(--primary-ring);
+  color: var(--accent);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.editor-label-chip .bi-tag-fill { font-size: 11px; }
+.chip-remove-btn {
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 2px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+.chip-remove-btn:hover { opacity: 1; }
+
+/* Image attachments */
+.editor-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 10px;
+}
+.image-preview-wrapper {
+  position: relative;
+  width: 80px; height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.image-preview { width: 100%; height: 100%; object-fit: cover; }
+.remove-img-btn {
+  position: absolute;
+  top: 4px; right: 4px;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px; height: 20px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+}
+.remove-img-btn:hover { background: var(--danger); }
+
+/* Editor footer */
+.editor-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px 20px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  gap: 8px;
+}
+.editor-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.status-dot--saving { background: #f59e0b; animation: pulse-dot 0.8s infinite; }
+@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+.status-icon--saved { color: var(--success); font-size: 14px; }
+.status-icon--idle  { color: var(--text-hint); font-size: 14px; }
+
+.editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Nút icon trong footer editor (gắn nhãn) */
+.footer-icon-btn {
+  width: 36px; height: 36px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.footer-icon-btn:hover { background: var(--primary-ring); color: var(--accent); border-color: var(--accent); }
+
+.upload-btn {
+  display: flex; align-items: center; gap: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-weight: 600; font-size: 13px;
+  padding: 7px 13px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.upload-btn:hover { background: var(--bg-page); color: var(--text-dark); }
+
+.editor-done-btn {
+  padding: 9px 22px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+  box-shadow: var(--shadow-btn);
+  white-space: nowrap;
+}
+.editor-done-btn:hover { opacity: 0.88; transform: translateY(-1px); }

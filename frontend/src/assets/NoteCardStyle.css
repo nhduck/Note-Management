@@ -1,0 +1,161 @@
+/* ════════════════════════════════════
+   NOTE CARD
+════════════════════════════════════ */
+.note-card {
+  background: var(--bg-card);
+  border-radius: 14px;
+  padding: 18px;
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
+  position: relative;
+}
+.note-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+.note-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; width: 4px; height: 100%;
+  background: var(--note-color);
+  border-radius: 4px 0 0 4px;
+}
+.note-card--pinned {
+  border-color: rgba(81,71,212,0.35);
+  background: linear-gradient(135deg, var(--bg-card) 85%, rgba(81,71,212,0.06) 100%);
+}
+.note-card--pinned::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 0; height: 0;
+  border-style: solid;
+  border-width: 0 20px 20px 0;
+  border-color: transparent var(--accent) transparent transparent;
+  border-radius: 0 14px 0 0;
+}
+
+/* Icon hàng đầu */
+.note-header-icons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 6px;
+  min-height: 28px;
+}
+.note-badge-icon { font-size: 12px; color: var(--text-muted); padding: 4px; }
+
+/* Pin button */
+.pin-btn {
+  width: 28px; height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: transparent;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  transition: background 0.2s, color 0.2s, transform 0.15s;
+  flex-shrink: 0;
+}
+.pin-btn--visible { color: var(--text-muted); }
+.pin-btn--visible:hover {
+  background: var(--primary-ring);
+  color: var(--accent);
+  transform: rotate(-20deg) scale(1.1);
+}
+.pin-btn--active { color: var(--accent) !important; }
+.pin-btn--active:hover {
+  background: var(--primary-ring);
+  transform: rotate(20deg) scale(1.1);
+}
+
+/* Thumbnail */
+.note-thumbnail-container {
+  position: relative;
+  width: 100%; height: 120px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.note-thumbnail { width: 100%; height: 100%; object-fit: cover; }
+.more-images-badge {
+  position: absolute;
+  bottom: 8px; right: 8px;
+  background: rgba(0,0,0,0.65);
+  color: white;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 3px 7px;
+  border-radius: 12px;
+  backdrop-filter: blur(4px);
+}
+
+.note-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.note-preview {
+  font-size: 0.9em;
+  color: var(--text-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Nhãn hiển thị trong note card */
+.note-labels-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 10px;
+}
+.note-label-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: var(--primary-ring);
+  color: var(--accent);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.note-label-chip .bi-tag-fill { font-size: 10px; }
+
+.note-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+.note-date { font-size: 11px; color: var(--text-muted); }
+
+/* Delete button on card */
+.delete-icon-btn {
+  width: 32px; height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: transparent;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  transition: background 0.2s, color 0.2s, transform 0.15s;
+  flex-shrink: 0;
+}
+.delete-icon-btn--visible { color: var(--text-muted); background: var(--danger-soft); }
+.delete-icon-btn--visible:hover { background: var(--danger); color: #fff; transform: scale(1.08); }
+
+/* Search highlight */
+.search-highlight {
+  background: rgba(255, 214, 0, 0.35);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 2px;
+  font-weight: 700;
+}
+.dark .search-highlight { background: rgba(255, 214, 0, 0.25); }
