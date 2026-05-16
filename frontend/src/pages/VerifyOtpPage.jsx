@@ -9,7 +9,6 @@ const RESEND_COUNTDOWN = 60;
 const VerifyOtpPage = () => {
   const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(""));
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(RESEND_COUNTDOWN);
   const [resending, setResending] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -63,17 +62,6 @@ const VerifyOtpPage = () => {
     }
   };
 
-  const handlePaste = (e) => {
-    e.preventDefault();
-    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, OTP_LENGTH);
-    if (!pasted) return;
-    const next = [...otp];
-    for (let i = 0; i < pasted.length; i++) next[i] = pasted[i];
-    setOtp(next);
-    const focusIdx = Math.min(pasted.length, OTP_LENGTH - 1);
-    inputsRef.current[focusIdx]?.focus();
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     const code = otp.join("");
@@ -82,7 +70,6 @@ const VerifyOtpPage = () => {
       return;
     }
 
-    setLoading(true);
     try {
       const res = await fetch("api/verify-otp", {
         method: "POST",
@@ -107,8 +94,6 @@ const VerifyOtpPage = () => {
       }
     } catch {
       setError("Cannot connect to server.");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -166,7 +151,7 @@ const VerifyOtpPage = () => {
 
         <form onSubmit={handleSubmit} noValidate>
           {/* OTP Inputs */}
-          <div className="otp-inputs" onPaste={handlePaste}>
+          <div className="otp-inputs">
             {otp.map((digit, i) => (
               <input
                 key={i}
@@ -181,7 +166,7 @@ const VerifyOtpPage = () => {
                 autoFocus={i === 0}
                 autoComplete="one-time-code"
                 aria-label={`Digit ${i + 1}`}
-                disabled={loading || success}
+                disabled={success}
               />
             ))}
           </div>
@@ -201,18 +186,10 @@ const VerifyOtpPage = () => {
           <button
             type="submit"
             className="btn-submit"
-            disabled={loading || success}
+            disabled={success}
             style={{ marginTop: "4px", padding: "11px" }}
           >
-            {loading ? (
-              <>
-                <span className="otp-spinner"></span> Verifying…
-              </>
-            ) : (
-              <>
-                Verify Code <i className="bi bi-arrow-right-short"></i>
-              </>
-            )}
+            Verify Code <i className="bi bi-arrow-right-short"></i>
           </button>
         </form>
 

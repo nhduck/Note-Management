@@ -3,6 +3,8 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const router = express.Router();
 
+const Note = require('../models/Note');
+const Label = require('../models/Label');
 const User = require('../models/User');
 const Token = require('../models/Token');
 const transporter = require('../config/mailer');
@@ -78,7 +80,7 @@ router.post('/resend-otp', async (req, res) => {
             from: `"NoteSpace" <${process.env.EMAIL_USER}>`,
             to: email,
             subject: 'Gửi lại mã xác nhận',
-            html: `<h1>${newOtp}</h1>` // Rút gọn HTML trong ví dụ, bạn có thể giữ nguyên bản gốc
+            html: `<h1>${newOtp}</h1>`
         });
 
         res.json({ success: true, message: 'Mã mới đã được gửi!' });
@@ -114,7 +116,7 @@ router.post('/login', async (req, res) => {
 router.get('/verify-token', async (req, res) => {
     try {
         const tokenStr = req.headers.authorization?.split(' ')[1];
-        const record   = await Token.findOne({ token: tokenStr });
+        const record = await Token.findOne({ token: tokenStr });
         if (!record || new Date() > record.expiresAt)
             return res.status(401).json({ message: 'Unauthorized' });
         res.json({ valid: true, userId: record.userId });
@@ -191,6 +193,101 @@ router.patch('/users/:id/avatar', authMiddleware, async (req, res) => {
         res.json({ success: true, avatarUrl: user.avatarUrl });
     } catch (err) {
         res.status(500).json({ error: 'Cập nhật avatar thất bại' });
+    }
+});
+
+// =========================================================================
+// 1. CẬP NHẬT THÔNG TIN CÁ NHÂN (Thay đổi Display Name / Username)
+// =========================================================================
+router.put('/me/profile', authMiddleware, async (req, res) => {
+    try {
+        const { username } = req.body;
+        // FIX: dùng req.user._id thay vì req.user.id để tương thích với cả hai cách authMiddleware set
+        const userId = req.user?._id || req.user?.id || req.userId;
+
+        if (!username || username.trim() === '') {
+            return res.status(400).json({ message: 'Tên hiển thị không được để trống.' });
+        }
+
+        const existingUser = await User.findOne({ username: username.trim(), _id: { $ne: userId } });
+        if (existingUser) {
+            return res.status(400).json({ message: 'Tên hiển thị này đã được sử dụng.' });
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { username: username.trim() },
+            { new: true }
+        ).select('-password');
+
+        res.json({
+            success: true,
+            message: 'Cập nhật thông tin cá nhân thành công!',
+            user: { id: updatedUser._id, username: updatedUser.username }
+        });
+    } catch (err) {
+        res.status(500).json({ error: 'Cập nhật thông tin thất bại.' });
+    }
+});
+
+// =========================================================================
+// 2. ĐỔI MẬT KHẨU (Trong phiên đăng nhập)
+// =========================================================================
+router.put('/me/change-password', authMiddleware, async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        // FIX: tương thích cả req.user._id và req.userId
+        const userId = req.user?._id || req.user?.id || req.userId;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ message: 'Vui lòng điền đầy đủ thông tin.' });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({ message: 'Mật khẩu mới phải có ít nhất 6 ký tự.' });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ message: 'Người dùng không tồn tại.' });
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Mật khẩu hiện tại không chính xác.' });
+        }
+
+        user.password = await bcrypt.hash(newPassword, 10);
+        await user.save();
+
+        res.json({ success: true, message: 'Đổi mật khẩu thành công!' });
+    } catch (err) {
+        res.status(500).json({ error: 'Đổi mật khẩu thất bại.' });
+    }
+});
+
+// =========================================================================
+// 3. XÓA VĨNH VIỄN TÀI KHOẢN (Và toàn bộ dữ liệu đi kèm)
+// =========================================================================
+router.delete('/me/delete-account', authMiddleware, async (req, res) => {
+    try {
+        const { confirmText } = req.body;
+        // FIX: tương thích cả req.user._id và req.userId
+        const userId = req.user?._id || req.user?.id || req.userId;
+
+        if (confirmText !== 'XACNHAN') {
+            return res.status(400).json({ message: 'Chuỗi xác nhận không chính xác.' });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ message: 'Người dùng không tồn tại.' });
+
+        await Token.deleteMany({ userId });
+        await Note.deleteMany({ userId });
+        await Label.deleteMany({ userId });
+        await User.findByIdAndDelete(userId);
+
+        res.json({ success: true, message: 'Tài khoản của bạn đã được xóa vĩnh viễn.' });
+    } catch (err) {
+        res.status(500).json({ error: 'Xóa tài khoản thất bại.' });
     }
 });
 
