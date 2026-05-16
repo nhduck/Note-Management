@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "../assets/HomeStyle.css";
 
 // Hooks & Components
@@ -11,6 +11,7 @@ import EditorModal from "../components/EditorModal";
 import LabelManagerModal from "../components/LabelManagerModal";
 import DeleteConfirmModal from "../components/DeleteConfirmModal";
 import NotePasswordModal from "../components/Notepasswordmodal";
+import UserPreferencesModal, { loadPrefs, applyPrefs } from "../components/UserPreferencesModal";
 
 function HomePage() {
   // Chỉ giữ lại các State dành riêng cho UI Layout ở mức Top-Level
@@ -20,6 +21,10 @@ function HomePage() {
   const [showLabelManager, setShowLabelManager] = useState(false);
   const [showLabelPicker, setShowLabelPicker] = useState(false);
   const [passwordModal, setPasswordModal] = useState(null);
+  const [showPreferences, setShowPreferences] = useState(false);
+
+  // Áp dụng prefs đã lưu khi app khởi động
+  useEffect(() => { applyPrefs(loadPrefs()); }, []);
 
   // Kéo toàn bộ logic từ Custom Hook ra
   const {
@@ -50,6 +55,7 @@ function HomePage() {
         viewMode={viewMode} setViewMode={setViewMode}
         profile={profile} uploadingAvatar={uploadingAvatar}
         handleAvatarChange={handleAvatarChange} handleLogout={handleLogout}
+        onOpenPreferences={() => setShowPreferences(true)}
       />
 
       <div className="page-layout">
@@ -72,7 +78,7 @@ function HomePage() {
                   : `${filteredNotes.length} ghi chú`}
               </div>
             </div>
-            <button className="add-btn" onClick={() => { setSaveStatus("idle"); setActiveNote({ title: "", content: "", images: [], labels: [] }); }}>
+            <button className="add-btn" onClick={() => { setSaveStatus("idle"); setActiveNote({ title: "", content: "", images: [], labels: [], color: loadPrefs().noteColor }); }}>
               <i className="bi bi-plus-lg" /> Mới
             </button>
           </div>
@@ -142,6 +148,9 @@ function HomePage() {
             else fetchNotes();
           }}
         />
+      )}
+      {showPreferences && (
+        <UserPreferencesModal onClose={() => setShowPreferences(false)} />
       )}
     </div>
   );

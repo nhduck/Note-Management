@@ -10,6 +10,7 @@ const NoteSchema = new mongoose.Schema({
     password:   { type: String,  default: null },
     labels:     [{ type: mongoose.Schema.Types.ObjectId, ref: 'Label' }],
     sharedWith: [{ type: String }],
+    color:      { type: String, default: null },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Note', NoteSchema);

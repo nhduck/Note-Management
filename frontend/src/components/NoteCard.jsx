@@ -47,7 +47,7 @@ function NoteCard({ note, onEdit, onDelete, onTogglePin, searchTerm, onPasswordA
     <div
       className={`note-card ${note.isPinned ? "note-card--pinned" : ""}`}
       onClick={handleEditClick} // THAY ĐỔI: Sử dụng hàm handleEditClick thay vì onEdit trực tiếp
-      style={{ "--note-color": note.color || "#5147d4" }}
+      style={{ "--note-color": note.color || "var(--accent)" }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >

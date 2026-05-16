@@ -5,7 +5,8 @@ function Navbar({
   darkMode, setDarkMode,
   viewMode, setViewMode,
   profile, uploadingAvatar,
-  handleAvatarChange, handleLogout
+  handleAvatarChange, handleLogout,
+  onOpenPreferences,
 }) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
@@ -61,6 +62,10 @@ function Navbar({
                     : <><i className="bi bi-camera-fill profile-icon-purple" /> Đổi ảnh đại diện</>}
                   <input type="file" accept="image/*" hidden onChange={handleAvatarChange} disabled={uploadingAvatar} />
                 </label>
+
+                <button className="profile-popup-item" onClick={() => { setShowProfileMenu(false); onOpenPreferences(); }}>
+                  <i className="bi bi-sliders profile-icon-purple" /> Tùy chọn hiển thị
+                </button>
 
                 <button className="profile-popup-item profile-popup-item--danger" onClick={handleLogout}>
                   <i className="bi bi-box-arrow-right" /> Đăng xuất

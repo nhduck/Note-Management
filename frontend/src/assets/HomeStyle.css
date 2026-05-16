@@ -125,7 +125,7 @@
   font-size: 20px;
 }
 .dark .bi-sun-fill  { color: #f59e0b; }
-.bi-moon-stars-fill { color: #5147d4; }
+.bi-moon-stars-fill { color: var(--accent); }
 
 .avatar-btn {
   width: 38px; height: 38px;

@@ -74,6 +74,7 @@ export function useNotesLogic() {
             images: activeNote.images || [],
             labels: (activeNote.labels || []).map(l => l._id || l),
             userId: profile.id,
+            color: activeNote.color || null,
           }),
         });
         const data = await res.json();
