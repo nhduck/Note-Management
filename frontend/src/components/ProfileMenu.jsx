@@ -6,6 +6,7 @@ const ProfileMenu = ({
   uploadingAvatar,
   onClose,
   onAvatarChange,
+  onOpenPreferences,
   onSecuritySettings,
   onLogout
 }) => {
@@ -38,6 +39,11 @@ const ProfileMenu = ({
             : <><i className="bi bi-camera-fill profile-icon-purple" /> Đổi ảnh đại diện</>}
           <input type="file" accept="image/*" hidden onChange={onAvatarChange} disabled={uploadingAvatar} />
         </label>
+
+        {/* ✅ Thêm nút Tùy chọn hiển thị */}
+        <button className="profile-popup-item" onClick={onOpenPreferences}>
+          <i className="bi bi-sliders profile-icon-purple" /> Tùy chọn hiển thị
+        </button>
 
         <button className="profile-popup-item" onClick={onSecuritySettings}>
           <i className="bi bi-shield-lock-fill profile-icon-purple" /> Cài đặt bảo mật

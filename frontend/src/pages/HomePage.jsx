@@ -11,31 +11,22 @@ import EditorModal from "../components/EditorModal";
 import LabelManagerModal from "../components/LabelManagerModal";
 import DeleteConfirmModal from "../components/DeleteConfirmModal";
 import NotePasswordModal from "../components/Notepasswordmodal";
-<<<<<<< HEAD
 import UserPreferencesModal, { loadPrefs, applyPrefs } from "../components/UserPreferencesModal";
-=======
 import SecuritySettingsModal from "../components/SecuritySettingsModal";
->>>>>>> 74fb6c7b2ccf74e34fff3972f63f559453982649
 
 function HomePage() {
-  // Chỉ giữ lại các State dành riêng cho UI Layout ở mức Top-Level
   const [viewMode, setViewMode] = useState("grid");
   const [darkMode, setDarkMode] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [showLabelManager, setShowLabelManager] = useState(false);
   const [showLabelPicker, setShowLabelPicker] = useState(false);
   const [passwordModal, setPasswordModal] = useState(null);
-<<<<<<< HEAD
   const [showPreferences, setShowPreferences] = useState(false);
+  const [showSecurityModal, setShowSecurityModal] = useState(false);
 
   // Áp dụng prefs đã lưu khi app khởi động
   useEffect(() => { applyPrefs(loadPrefs()); }, []);
-=======
-  const [showSecurityModal, setShowSecurityModal] = useState(false);
 
->>>>>>> 74fb6c7b2ccf74e34fff3972f63f559453982649
-
-  // Kéo toàn bộ logic từ Custom Hook ra
   const {
     labels, activeLabel, setActiveLabel,
     searchTerm, setSearchTerm, debouncedSearch,
@@ -49,10 +40,9 @@ function HomePage() {
   } = useNotesLogic();
 
   const handleSecuritySettings = () => {
-      setShowSecurityModal(true);
+    setShowSecurityModal(true);
   };
 
-  // Tính toán UI phái sinh
   const pinnedNotes = filteredNotes.filter(n => n.isPinned);
   const unpinnedNotes = filteredNotes.filter(n => !n.isPinned);
   const pageTitle = activeLabel ? `Nhãn: ${activeLabel.name}` : "Ghi chú của tôi";
@@ -68,11 +58,8 @@ function HomePage() {
         viewMode={viewMode} setViewMode={setViewMode}
         profile={profile} uploadingAvatar={uploadingAvatar}
         handleAvatarChange={handleAvatarChange} handleLogout={handleLogout}
-<<<<<<< HEAD
         onOpenPreferences={() => setShowPreferences(true)}
-=======
         handleSecuritySettings={handleSecuritySettings}
->>>>>>> 74fb6c7b2ccf74e34fff3972f63f559453982649
       />
 
       <div className="page-layout">
@@ -101,7 +88,6 @@ function HomePage() {
             </button>
           </div>
 
-          {/* Render Ghi chú tương tự logic cũ */}
           {debouncedSearch && filteredNotes.length === 0 && (
             <div className="search-empty">
               <i className="bi bi-search" />
@@ -153,9 +139,12 @@ function HomePage() {
           onRemoveImage={handleRemoveImage} onToggleLabelOnNote={handleToggleLabelOnNote}
         />
       )}
-
-      {showLabelManager && <LabelManagerModal labels={labels} userId={profile?.id} onClose={() => setShowLabelManager(false)} onChanged={() => { fetchLabels(); fetchNotes(); }} />}
-      {deleteConfirm && <DeleteConfirmModal onCancel={() => setDeleteConfirm(null)} onConfirm={() => { handleDelete(deleteConfirm); setDeleteConfirm(null); }} />}
+      {showLabelManager && (
+        <LabelManagerModal labels={labels} userId={profile?.id} onClose={() => setShowLabelManager(false)} onChanged={() => { fetchLabels(); fetchNotes(); }} />
+      )}
+      {deleteConfirm && (
+        <DeleteConfirmModal onCancel={() => setDeleteConfirm(null)} onConfirm={() => { handleDelete(deleteConfirm); setDeleteConfirm(null); }} />
+      )}
       {passwordModal && (
         <NotePasswordModal
           mode={passwordModal.mode} noteId={passwordModal.noteId}
@@ -169,16 +158,15 @@ function HomePage() {
       )}
       {showPreferences && (
         <UserPreferencesModal onClose={() => setShowPreferences(false)} />
-
       )}
-      
       {showSecurityModal && (
         <SecuritySettingsModal
-        onClose={() => setShowSecurityModal(false)}
-        darkMode={darkMode}
-        profile={profile}
-        onProfileUpdate={(updatedProfile) => setProfile(updatedProfile)}
-      />
+          onClose={() => setShowSecurityModal(false)}
+          darkMode={darkMode}
+          profile={profile}
+          onProfileUpdate={(updatedProfile) => setProfile(updatedProfile)}
+        />
+      )}
     </div>
   );
 }
