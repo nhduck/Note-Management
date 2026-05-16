@@ -3,42 +3,38 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import "../assets/LoginStyle.css";
 import "../assets/VerifyOtpStyle.css";
 
-const OTP_LENGTH = 6;
+const OTP_LENGTH      = 6;
 const RESEND_COUNTDOWN = 60;
 
 const VerifyOtpPage = () => {
-  const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(""));
-  const [error, setError] = useState("");
+  const [otp, setOtp]         = useState(Array(OTP_LENGTH).fill(""));
+  const [error, setError]     = useState("");
   const [countdown, setCountdown] = useState(RESEND_COUNTDOWN);
   const [resending, setResending] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [success, setSuccess]   = useState(false);
 
   const inputsRef = useRef([]);
-  const navigate = useNavigate();
-  const location = useLocation();
+  const navigate  = useNavigate();
+  const location  = useLocation();
 
-  // Email và type được truyền qua router state
-  // type: "register" (xác thực tài khoản) | "reset" (quên mật khẩu)
+  // Email context values and system target states passed safely down via router states
+  // type: "register" (Account signup verification) | "reset" (Password recovery process)
   const email = location.state?.email || "your email";
-  const type = location.state?.type || "register";
+  const type  = location.state?.type  || "register";
 
-  // Countdown timer
+  // Countdown clock handling resend authorization blocks
   useEffect(() => {
     if (countdown <= 0) return;
     const id = setTimeout(() => setCountdown((c) => c - 1), 1000);
     return () => clearTimeout(id);
   }, [countdown]);
 
-  const focusNext = (index) => {
-    if (index < OTP_LENGTH - 1) inputsRef.current[index + 1]?.focus();
-  };
-
-  const focusPrev = (index) => {
-    if (index > 0) inputsRef.current[index - 1]?.focus();
-  };
+  // Handle pointer shifts forward and backward between verification input slots
+  const focusNext = (index) => { if (index < OTP_LENGTH - 1) inputsRef.current[index + 1]?.focus(); };
+  const focusPrev = (index) => { if (index > 0) inputsRef.current[index - 1]?.focus(); };
 
   const handleChange = (e, index) => {
-    const val = e.target.value.replace(/\D/g, "").slice(-1);
+    const val  = e.target.value.replace(/\D/g, "").slice(-1);
     const next = [...otp];
     next[index] = val;
     setOtp(next);
@@ -49,19 +45,13 @@ const VerifyOtpPage = () => {
   const handleKeyDown = (e, index) => {
     if (e.key === "Backspace") {
       if (otp[index]) {
-        const next = [...otp];
-        next[index] = "";
-        setOtp(next);
-      } else {
-        focusPrev(index);
-      }
-    } else if (e.key === "ArrowLeft") {
-      focusPrev(index);
-    } else if (e.key === "ArrowRight") {
-      focusNext(index);
-    }
+        const next = [...otp]; next[index] = ""; setOtp(next);
+      } else { focusPrev(index); }
+    } else if (e.key === "ArrowLeft")  { focusPrev(index); }
+      else if (e.key === "ArrowRight") { focusNext(index); }
   };
 
+  // Authenticate targeted verification code array blocks
   const handleSubmit = async (e) => {
     e.preventDefault();
     const code = otp.join("");
@@ -81,29 +71,29 @@ const VerifyOtpPage = () => {
       if (res.ok) {
         setSuccess(true);
         if (type === "reset") {
-          // Chuyển sang trang đặt lại mật khẩu, truyền kèm email và otp để xác thực lại
+          // Route over to password override views containing the active confirmation payload
           setTimeout(() => navigate("/reset-password", { state: { email, otp: code } }), 1200);
         } else {
-          // Đăng ký xong -> về trang login
+          // Signup workflow complete -> redirect downstream towards login portal
           setTimeout(() => navigate("/login"), 1200);
         }
       } else {
-        setError(data.message || "Invalid or expired code. Please try again.");
+        setError(data.message || "Invalid or expired verification code. Please try again.");
         setOtp(Array(OTP_LENGTH).fill(""));
         inputsRef.current[0]?.focus();
       }
     } catch {
-      setError("Cannot connect to server.");
+      setError("Unable to connect to the server.");
     }
   };
 
+  // Re-transmit a new secure token instance to client email coordinates
   const handleResend = async () => {
     if (countdown > 0 || resending) return;
     setResending(true);
     setError("");
     try {
-      // reset dùng lại endpoint forgot-password để tạo OTP mới
-      // register dùng endpoint resend-otp
+      // Recovery states utilize the forgot-password route | Signups use resend-otp
       const url = type === "reset" ? "api/forgot-password" : "api/resend-otp";
       const res = await fetch(url, {
         method: "POST",
@@ -119,38 +109,38 @@ const VerifyOtpPage = () => {
         setError("Failed to resend code. Please try again.");
       }
     } catch {
-      setError("Cannot connect to server.");
+      setError("Unable to connect to the server.");
     } finally {
       setResending(false);
     }
   };
 
-  const filled = otp.filter(Boolean).length;
+  const filled   = otp.filter(Boolean).length;
   const progress = (filled / OTP_LENGTH) * 100;
 
   return (
     <div className="form-side">
       <main className="login-card otp-card">
-        {/* Icon */}
+        {/* State Validation Icon Indicator */}
         <div className="otp-icon-wrap">
           <div className={`otp-icon-ring ${success ? "otp-icon-ring--success" : ""}`}>
             <i className={`bi ${success ? "bi-check-lg" : "bi-shield-lock"} otp-icon`} aria-hidden="true"></i>
           </div>
         </div>
 
-        <h1 className="card-title text-center">Verify Your Email</h1>
+        <h1 className="card-title text-center">Verify Email</h1>
         <p className="card-subtitle text-center text-muted" style={{ marginBottom: "8px" }}>
-          We've sent a 6-digit code to
+          We have sent a 6-digit verification code to
         </p>
         <p className="otp-email-badge">{email}</p>
 
-        {/* Progress bar */}
+        {/* Input Progress Vector Component */}
         <div className="otp-progress-track">
           <div className="otp-progress-bar" style={{ width: `${progress}%` }}></div>
         </div>
 
         <form onSubmit={handleSubmit} noValidate>
-          {/* OTP Inputs */}
+          {/* Main OTP Multi-Slot Matrix layout */}
           <div className="otp-inputs">
             {otp.map((digit, i) => (
               <input
@@ -179,7 +169,7 @@ const VerifyOtpPage = () => {
 
           {success && (
             <p className="otp-success-msg">
-              <i className="bi bi-check-circle-fill"></i> Verified! Redirecting…
+              <i className="bi bi-check-circle-fill"></i> Verification successful! Redirecting…
             </p>
           )}
 
@@ -193,7 +183,7 @@ const VerifyOtpPage = () => {
           </button>
         </form>
 
-        {/* Resend */}
+        {/* Dispatch Action Layout Options */}
         <div className="otp-resend-row">
           <span className="small text-muted">Didn't receive the code?</span>
           {countdown > 0 ? (
@@ -201,11 +191,7 @@ const VerifyOtpPage = () => {
               Resend in <strong>{countdown}s</strong>
             </span>
           ) : (
-            <button
-              className="otp-resend-btn"
-              onClick={handleResend}
-              disabled={resending}
-            >
+            <button className="otp-resend-btn" onClick={handleResend} disabled={resending}>
               {resending ? "Sending…" : "Resend Code"}
             </button>
           )}

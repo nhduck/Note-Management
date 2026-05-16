@@ -232,3 +232,10 @@
   .security-modal-body { padding: 18px 16px; }
   .security-modal-close { top: 12px; right: 12px; }
 }
+
+/* ── Responsive bổ sung ─────────────────────────────── */
+@media (max-width: 480px) {
+  .security-modal-body  { padding: 16px 14px; }
+  .security-modal-title { font-size: 0.95rem; }
+  .btn-save, .btn-delete-account { width: 100%; }
+}

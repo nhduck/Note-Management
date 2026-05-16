@@ -226,3 +226,10 @@
     gap: 7px;
   }
 }
+/* ── Responsive bổ sung ─────────────────────────────── */
+@media (max-width: 480px) {
+  .otp-card   { padding: 28px 18px; }
+  .otp-input  { width: 38px; height: 50px; font-size: 18px; }
+  .otp-inputs { gap: 6px; }
+  .card-title { font-size: 20px; }
+}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import LabelPickerDropdown from "./LabelPickerDropdown" 
+import LabelPickerDropdown from "./LabelPickerDropdown";
 import "../assets/EditorModalStyle.css";
 
 function EditorModal({
@@ -16,43 +16,63 @@ function EditorModal({
   onToggleLabelOnNote,
 }) {
   return (
+    // Backdrop overlay: clicks here close the modal via onClose
     <div className="modal-overlay" onClick={onClose}>
+      
+      {/* Main modal container: prevents propagation to avoid accidental closing */}
       <div className="editor-modal" onClick={e => e.stopPropagation()}>
+        
+        {/* HEADER SECTION: Displays icon, dynamic title (Edit/New), and close button */}
         <div className="editor-header">
           <div className="editor-header-left">
             <div className="editor-icon-wrap"><i className="bi bi-pencil-square" /></div>
-            <span className="editor-header-label">{activeNote._id ? "Chỉnh sửa ghi chú" : "Ghi chú mới"}</span>
+            {/* Dynamic header text based on whether the note already has an ID */}
+            <span className="editor-header-label">
+              {activeNote._id ? "Edit Note" : "New Note"}
+            </span>
           </div>
           <button className="editor-close-btn" onClick={onClose}>
             <i className="bi bi-x-lg" />
           </button>
         </div>
 
+        {/* BODY SECTION: Contains inputs for Title, Content, active Labels, and Image previews */}
         <div className="editor-body">
+          {/* Title Input field */}
           <div className="editor-field">
-            <label className="editor-label">Tiêu đề</label>
-            <input className="editor-title" placeholder="Nhập tiêu đề..."
+            <label className="editor-label">Title</label>
+            <input 
+              className="editor-title" 
+              placeholder="Enter title..."
               value={activeNote.title}
-              onChange={e => setActiveNote({ ...activeNote, title: e.target.value })} />
+              onChange={e => setActiveNote({ ...activeNote, title: e.target.value })} 
+            />
           </div>
+          
+          {/* Content Textarea field (grows vertically) */}
           <div className="editor-field editor-field--grow">
-            <label className="editor-label">Nội dung</label>
-            <textarea className="editor-content" placeholder="Bắt đầu nhập nội dung..."
+            <label className="editor-label">Content</label>
+            <textarea 
+              className="editor-content" 
+              placeholder="Start typing your note..."
               value={activeNote.content}
-              onChange={e => setActiveNote({ ...activeNote, content: e.target.value })} />
+              onChange={e => setActiveNote({ ...activeNote, content: e.target.value })} 
+            />
           </div>
 
+          {/* Active Labels Row: renders attached labels as chips with a remove button */}
           {(activeNote.labels || []).length > 0 && (
             <div className="editor-labels-row">
               {activeNote.labels.map(lbl => (
                 <span key={lbl._id || lbl} className="editor-label-chip">
                   <i className="bi bi-tag-fill" /> {lbl.name || lbl}
-                  <button className="chip-remove-btn" onClick={() => onToggleLabelOnNote(lbl)} title="Gỡ nhãn">×</button>
+                  <button className="chip-remove-btn" onClick={() => onToggleLabelOnNote(lbl)} title="Remove label">×</button>
                 </span>
               ))}
             </div>
           )}
 
+          {/* Image Previews Grid: displays uploaded images with a remove button overlay */}
           {(activeNote.images || []).length > 0 && (
             <div className="editor-images">
               {activeNote.images.map((imgSrc, idx) => (
@@ -67,15 +87,20 @@ function EditorModal({
           )}
         </div>
 
+        {/* FOOTER SECTION: Displays real-time auto-save status and action buttons */}
         <div className="editor-footer">
+          {/* Auto-save status feedback indicators */}
           <div className="editor-status">
-            {saveStatus === "saving" && <><span className="status-dot status-dot--saving" /><span>Đang lưu...</span></>}
-            {saveStatus === "saved"  && <><i className="bi bi-cloud-check-fill status-icon--saved" /><span>Đã tự động lưu</span></>}
-            {saveStatus === "idle"   && <><i className="bi bi-cloud status-icon--idle" /><span>Chưa có thay đổi</span></>}
+            {saveStatus === "saving" && <><span className="status-dot status-dot--saving" /><span>Saving...</span></>}
+            {saveStatus === "saved"  && <><i className="bi bi-cloud-check-fill status-icon--saved" /><span>Auto-saved</span></>}
+            {saveStatus === "idle"   && <><i className="bi bi-cloud status-icon--idle" /><span>No changes</span></>}
           </div>
+          
+          {/* Action trigger controls: Label picker dropdown, Image upload input, and Done button */}
           <div className="editor-actions">
+            {/* Label picker toggle button & dropdown container */}
             <div className="label-picker-wrap">
-              <button className="footer-icon-btn" onClick={() => setShowLabelPicker(p => !p)} title="Gắn nhãn">
+              <button className="footer-icon-btn" onClick={() => setShowLabelPicker(p => !p)} title="Add label">
                 <i className="bi bi-tag" />
               </button>
               {showLabelPicker && (
@@ -88,13 +113,18 @@ function EditorModal({
                 />
               )}
             </div>
-            <label className={`upload-btn ${uploading ? "upload-btn--loading" : ""}`} title="Thêm ảnh">
-              {uploading ? <><i className="bi bi-arrow-repeat spin" /> Đang tải...</> : <><i className="bi bi-image" /> Thêm ảnh</>}
+            
+            {/* Image upload button (styled label wrapping a hidden file input) */}
+            <label className={`upload-btn ${uploading ? "upload-btn--loading" : ""}`} title="Add image">
+              {uploading ? <><i className="bi bi-arrow-repeat spin" /> Uploading...</> : <><i className="bi bi-image" /> Add image</>}
               <input type="file" accept="image/*" multiple hidden onChange={onImageUpload} disabled={uploading} />
             </label>
-            <button className="editor-done-btn" onClick={onClose}>Xong</button>
+            
+            {/* Finish and exit button */}
+            <button className="editor-done-btn" onClick={onClose}>Done</button>
           </div>
         </div>
+
       </div>
     </div>
   );

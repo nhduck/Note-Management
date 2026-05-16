@@ -2,18 +2,18 @@ import { useState, useEffect } from "react";
 import "../assets/UserPreferencesStyle.css";
 
 /* ═══════════════════════════════════════════════════════
-   CÁC GIÁ TRỊ MẶC ĐỊNH
+   DEFAULT CONFIGURATION VALUES
 ═══════════════════════════════════════════════════════ */
 export const DEFAULT_PREFS = {
   fontSize:  "medium",   // "small" | "medium" | "large" | "xlarge"
-  noteColor: "#5147d4",  // màu accent mặc định
+  noteColor: "#5147d4",  // Default system accent color
 };
 
 const FONT_OPTIONS = [
-  { value: "small",  label: "Nhỏ",    px: "12px" },
-  { value: "medium", label: "Vừa",    px: "14px" },
-  { value: "large",  label: "Lớn",    px: "16px" },
-  { value: "xlarge", label: "Rất lớn",px: "18px" },
+  { value: "small",  label: "Small",   px: "12px" },
+  { value: "medium", label: "Medium",  px: "14px" },
+  { value: "large",  label: "Large",   px: "16px" },
+  { value: "xlarge", label: "X-Large", px: "18px" },
 ];
 
 const COLOR_PRESETS = [
@@ -23,7 +23,7 @@ const COLOR_PRESETS = [
 ];
 
 /* ═══════════════════════════════════════════════════════
-   LOAD / SAVE prefs vào localStorage
+   LOCALSTORAGE DATA PERSISTENCE PIPELINE (LOAD / SAVE)
 ═══════════════════════════════════════════════════════ */
 export function loadPrefs() {
   try {
@@ -37,9 +37,9 @@ export function savePrefs(prefs) {
 }
 
 /* ═══════════════════════════════════════════════════════
-   ÁP DỤNG PREFS LÊN TOÀN BỘ TRANG
+   APPLICATION INJECTOR: MAPS CONFIGURATIONS TO CSS VARIABLES
 ═══════════════════════════════════════════════════════ */
-// Chuyển hex sang rgb để dùng trong rgba()
+// Converts hexadecimal colors to rgb format streams to support alpha-channel transparency structures
 function hexToRgb(hex) {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result
@@ -47,7 +47,7 @@ function hexToRgb(hex) {
     : "81, 71, 212";
 }
 
-// Làm tối màu hex đi ~15% để dùng làm màu hover
+// Lowers hexadecimal brightness levels by ~15% to construct dynamic cursor hover state mutations
 function darkenHex(hex, amount = 20) {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!result) return hex;
@@ -62,6 +62,7 @@ export function applyPrefs(prefs) {
   const fOpt = FONT_OPTIONS.find(f => f.value === prefs.fontSize) || FONT_OPTIONS[1];
   const rgb  = hexToRgb(prefs.noteColor);
 
+  // Directly bind settings parameters to global DOM CSS custom property tokens
   root.style.setProperty("--note-font-size", fOpt.px);
   root.style.setProperty("--accent",         prefs.noteColor);
   root.style.setProperty("--primary",        prefs.noteColor);
@@ -73,21 +74,23 @@ export function applyPrefs(prefs) {
 }
 
 /* ═══════════════════════════════════════════════════════
-   COMPONENT
+   MAIN MODAL INTERFACE COMPONENT
 ═══════════════════════════════════════════════════════ */
 function UserPreferencesModal({ onClose }) {
   const [prefs, setPrefs] = useState(loadPrefs);
   const [saved, setSaved] = useState(false);
 
-  // Preview realtime khi thay đổi
+  // Real-time preview observer loop: Triggers styling pipeline as configurations shift locally
   useEffect(() => { applyPrefs(prefs); }, [prefs]);
 
+  // Persists localized updates to storage and triggers confirmation lifecycle delays before closing
   const handleSave = () => {
     savePrefs(prefs);
     setSaved(true);
     setTimeout(() => { setSaved(false); onClose(); }, 800);
   };
 
+  // Reverts settings parameters back to hardcoded default values
   const handleReset = () => {
     setPrefs({ ...DEFAULT_PREFS });
   };
@@ -98,24 +101,24 @@ function UserPreferencesModal({ onClose }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="up-modal" onClick={e => e.stopPropagation()}>
 
-        {/* Header */}
+        {/* ── HEADER SECTION ── */}
         <div className="up-header">
           <div className="up-header-left">
             <div className="up-icon-wrap"><i className="bi bi-sliders" /></div>
-            <span className="up-title">Tùy chọn hiển thị</span>
+            <span className="up-title">Display Preferences</span>
           </div>
           <button className="up-close-btn" onClick={onClose}>
             <i className="bi bi-x-lg" />
           </button>
         </div>
 
-        {/* Body */}
+        {/* ── FORM BODY CONTROLS ── */}
         <div className="up-body">
 
-          {/* ── Font size ── */}
+          {/* CONTROL BLOCK 1: Note Text Typography Scaling options */}
           <section className="up-section">
             <div className="up-section-title">
-              <i className="bi bi-fonts" /> Kích thước chữ ghi chú
+              <i className="bi bi-fonts" /> Note Font Size
             </div>
             <div className="up-font-row">
               {FONT_OPTIONS.map(opt => (
@@ -131,18 +134,18 @@ function UserPreferencesModal({ onClose }) {
               ))}
             </div>
 
-            {/* Preview text */}
+            {/* Typography Scaled Layout Mock Box */}
             <div className="up-preview-box">
               <span style={{ fontSize: FONT_OPTIONS.find(f => f.value === prefs.fontSize)?.px }}>
-                Đây là ví dụ nội dung ghi chú với kích thước đã chọn.
+                This is a preview of the note content text using the selected size.
               </span>
             </div>
           </section>
 
-          {/* ── Note color ── */}
+          {/* CONTROL BLOCK 2: Core Global Accent Palette Selection triggers */}
           <section className="up-section">
             <div className="up-section-title">
-              <i className="bi bi-palette" /> Màu sắc chủ đạo
+              <i className="bi bi-palette" /> Theme Theme Color
             </div>
             <div className="up-color-grid">
               {COLOR_PRESETS.map(color => (
@@ -158,10 +161,10 @@ function UserPreferencesModal({ onClose }) {
               ))}
             </div>
 
-            {/* Custom color picker */}
+            {/* Custom Interactive Color Pipette Stream Wrapper */}
             <div className="up-custom-color">
               <label className="up-custom-label">
-                <i className="bi bi-eyedropper" /> Màu tùy chỉnh:
+                <i className="bi bi-eyedropper" /> Custom Color:
               </label>
               <div className="up-custom-picker-wrap">
                 <input
@@ -174,28 +177,28 @@ function UserPreferencesModal({ onClose }) {
               </div>
             </div>
 
-            {/* Preview */}
+            {/* Complete UI Card Composition Aesthetic Preview Panel */}
             <div className="up-color-preview" style={{ "--preview-color": prefs.noteColor }}>
               <div className="up-color-preview-card">
-                <div className="up-color-preview-title">Tiêu đề ghi chú</div>
-                <div className="up-color-preview-text">Nội dung ghi chú mẫu...</div>
-                <div className="up-color-preview-btn">Màu chủ đạo</div>
+                <div className="up-color-preview-title">Note Title</div>
+                <div className="up-color-preview-text">Sample note content body rendering...</div>
+                <div className="up-color-preview-btn">Accent Theme</div>
               </div>
             </div>
           </section>
         </div>
 
-        {/* Footer */}
+        {/* ── FOOTER ACTIONS ── */}
         <div className="up-footer">
-          <button className="up-btn up-btn--reset" onClick={handleReset} title="Khôi phục mặc định">
-            <i className="bi bi-arrow-counterclockwise" /> Mặc định
+          <button className="up-btn up-btn--reset" onClick={handleReset} title="Restore factory defaults">
+            <i className="bi bi-arrow-counterclockwise" /> Reset Defaults
           </button>
           <div style={{ display: "flex", gap: "10px" }}>
-            <button className="up-btn up-btn--cancel" onClick={onClose}>Huỷ</button>
+            <button className="up-btn up-btn--cancel" onClick={onClose}>Cancel</button>
             <button className={`up-btn up-btn--save ${saved ? "up-btn--saved" : ""}`} onClick={handleSave}>
               {saved
-                ? <><i className="bi bi-check2-circle" /> Đã lưu!</>
-                : <><i className="bi bi-floppy" /> Lưu cài đặt</>}
+                ? <><i className="bi bi-check2-circle" /> Saved!</>
+                : <><i className="bi bi-floppy" /> Save Settings</>}
             </button>
           </div>
         </div>

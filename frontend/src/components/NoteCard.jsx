@@ -1,13 +1,20 @@
 import "../assets/NoteCardStyle.css"
 
-/* ── Highlight search text ── */
+/* ── Highlight search text component ── */
 function HighlightText({ text, searchTerm }) {
+  // If there's no active search term or text body, render the plain text as is
   if (!searchTerm || !text) return <span>{text}</span>;
+  
+  // Escape special regex characters to prevent pattern crashes
   const escaped = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  
+  // Split text by matching segments dynamically using case-insensitive flag
   const parts   = text.split(new RegExp(`(${escaped})`, "gi"));
+  
   return (
     <span>
       {parts.map((part, i) =>
+        // If the part matches search term, wrap it in a <mark> element for styling
         part.toLowerCase() === searchTerm.toLowerCase()
           ? <mark key={i} className="search-highlight">{part}</mark>
           : part
@@ -18,26 +25,28 @@ function HighlightText({ text, searchTerm }) {
 
 function NoteCard({ note, onEdit, onDelete, onTogglePin, searchTerm, onPasswordAction }) {
 
+  // Intercept card click: Request password unlock first if the note is password protected
   const handleEditClick = () => {
     if (note.password) {
-      // Nếu có mật khẩu -> Yêu cầu mở khóa trước, truyền callback hành động kế tiếp vào
+      // Trigger unlock action modal and pass the intended edit callback execution sequence
       onPasswordAction("unlock", note._id, () => {
         onEdit();
       });
     } else {
-      onEdit(); // Không có mật khẩu thì mở trực tiếp
+      onEdit(); // Open immediately if no password restriction exists
     }
   };
 
+  // Intercept delete icon click: Requires permission authorization verification
   const handleDeleteClick = (e) => {
-    e.stopPropagation(); // Chặn lan truyền sự kiện click ra thẻ cha
+    e.stopPropagation(); // Prevents click event bubbling up to the card element layout container
     if (note.password) {
-      // Nếu có mật khẩu -> Phải nhập đúng mật khẩu mới cho quyền thực thi lệnh xóa
+      // Must unlock successfully before executing permanent delete callback logic
       onPasswordAction("unlock", note._id, () => {
         onDelete();
       });
     } else {
-      onDelete(); // Ghi chú thường thì xóa luôn
+      onDelete(); // Delete standard notes directly
     }
   };
 
@@ -47,17 +56,19 @@ function NoteCard({ note, onEdit, onDelete, onTogglePin, searchTerm, onPasswordA
       onClick={handleEditClick}
       style={{ "--note-color": note.color || "var(--accent)" }}
     >
+      {/* CARD TOP BADGES & ACTIONS: Pin triggers and metadata state indicators */}
       <div className="note-header-icons">
         <button
           className={`pin-btn ${note.isPinned ? "pin-btn--active" : ""}`}
-          onClick={onTogglePin} title={note.isPinned ? "Bỏ ghim" : "Ghim lên đầu"}
+          onClick={onTogglePin} title={note.isPinned ? "Unpin" : "Pin to top"}
         >
           <i className={`bi ${note.isPinned ? "bi-pin-angle-fill" : "bi-pin-angle"}`} />
         </button>
-        {note.password               && <i className="bi bi-lock-fill note-badge-icon"   title="Có mật khẩu" />}
-        {note.sharedWith?.length > 0 && <i className="bi bi-people-fill note-badge-icon" title="Đã chia sẻ" />}
+        {note.password               && <i className="bi bi-lock-fill note-badge-icon"   title="Password protected" />}
+        {note.sharedWith?.length > 0 && <i className="bi bi-people-fill note-badge-icon" title="Shared" />}
       </div>
 
+      {/* MEDIA CONTAINER: Renders the first attached image thumbnail preview */}
       {note.images?.length > 0 && (
         <div className="note-thumbnail-container">
           <img src={note.images[0]} alt="thumb" className="note-thumbnail" />
@@ -65,21 +76,23 @@ function NoteCard({ note, onEdit, onDelete, onTogglePin, searchTerm, onPasswordA
         </div>
       )}
 
+      {/* TITLE CONTAINER */}
       <div className="note-title">
-        <HighlightText text={note.title || "Không có tiêu đề"} searchTerm={searchTerm} />
+        <HighlightText text={note.title || "Untitled"} searchTerm={searchTerm} />
       </div>
 
-      {/* 4. BẢO MẬT: NẾU CÓ MẬT KHẨU THÌ ẨN NỘI DUNG XEM TRƯỚC */}
+      {/* CONTENT PREVIEW: Hides actual body text if password protection is enabled */}
       <div className="note-preview">
         {note.password ? (
           <span style={{ color: "#8c8c8c", fontStyle: "italic", fontSize: "0.9rem" }}>
-            🔒 Nội dung ghi chú đã được mã hóa bảo mật
+            🔒 Note content encrypted for security
           </span>
         ) : (
           <HighlightText text={note.content} searchTerm={searchTerm} />
         )}
       </div>
 
+      {/* LABELS ROW CONTAINER */}
       {note.labels?.length > 0 && (
         <div className="note-labels-row">
           {note.labels.map(lbl => (
@@ -90,43 +103,48 @@ function NoteCard({ note, onEdit, onDelete, onTogglePin, searchTerm, onPasswordA
         </div>
       )}
 
+      {/* CARD FOOTER: Formatted update timestamp and action utility panel */}
       <div className="note-footer">
-        <span className="note-date">{new Date(note.updatedAt).toLocaleDateString("vi-VN")}</span>
+        {/* Render formatted US layout local date configuration pattern */}
+        <span className="note-date">{new Date(note.updatedAt).toLocaleDateString("en-US")}</span>
         
         <div className="note-footer-actions" style={{ display: "flex", gap: "6px", alignItems: "center" }}>
           
-          {/* 5. THÊM CÁC NÚT ĐIỀU KHIỂN MẬT KHẨU PHÙ HỢP VỚI TRẠNG THÁI GHI CHÚ */}
+          {/* PASSWORD WORKFLOW ACTIONS: Displays control buttons dynamically by active state */}
           {!note.password ? (
+            // Option to protect an open note
             <button
               className="delete-icon-btn"
               onClick={e => { e.stopPropagation(); onPasswordAction("enable", note._id); }}
-              title="Đặt mật khẩu bảo mật"
+              title="Set security password"
             >
               <i className="bi bi-shield-lock" />
             </button>
           ) : (
+            // Options available for already encrypted entries
             <>
               <button
                 className="delete-icon-btn"
                 onClick={e => { e.stopPropagation(); onPasswordAction("change", note._id); }}
-                title="Thay đổi mật khẩu cũ"
+                title="Change security password"
               >
                 <i className="bi bi-key" />
               </button>
               <button
                 className="delete-icon-btn"
                 onClick={e => { e.stopPropagation(); onPasswordAction("disable", note._id); }}
-                title="Tắt bỏ bảo mật mật khẩu"
+                title="Remove security password"
               >
                 <i className="bi bi-unlock" />
               </button>
             </>
           )}
 
+          {/* DANGER ACTION: Delete entire note component tree record trigger */}
           <button
             className="delete-icon-btn delete-icon-btn--danger"
             onClick={handleDeleteClick}
-            title="Xóa ghi chú"
+            title="Delete note"
           >
             <i className="bi bi-trash3-fill" />
           </button>
