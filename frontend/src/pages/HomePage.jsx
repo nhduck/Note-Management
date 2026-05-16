@@ -4,6 +4,7 @@ import NoteCard           from "../components/NoteCard";
 import EditorModal        from "../components/EditorModal";
 import LabelManagerModal  from "../components/LabelManagerModal";
 import DeleteConfirmModal from "../components/DeleteConfirmModal";
+import NotePasswordModal  from "../components/Notepasswordmodal";
 
 /* ═══════════════════════════════════════════════════════
    HELPER
@@ -34,7 +35,7 @@ function HomePage() {
   const [showProfileMenu, setShowProfileMenu]   = useState(false);
   const [showLabelManager, setShowLabelManager] = useState(false);
   const [showLabelPicker, setShowLabelPicker]   = useState(false);
-
+  const [passwordModal, setPasswordModal]       = useState(null);
   // ── Auth ──────────────────────────────────────────────
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
@@ -379,11 +380,12 @@ function HomePage() {
               </div>
               <div className={viewMode === "grid" ? "notes-grid" : "notes-list"}>
                 {pinnedNotes.map(note => (
-                  <NoteCard key={note._id} note={note} searchTerm={debouncedSearch}
-                    onEdit={() => { setSaveStatus("idle"); setActiveNote(note); }}
-                    onDelete={() => setDeleteConfirm(note._id)}
-                    onTogglePin={e => handleTogglePin(e, note._id)}
-                  />
+                <NoteCard key={note._id} note={note} searchTerm={debouncedSearch}
+                  onEdit={() => { setSaveStatus("idle"); setActiveNote(note); }}
+                  onDelete={() => setDeleteConfirm(note._id)}
+                  onTogglePin={e => handleTogglePin(e, note._id)}
+                  onPasswordAction={(mode, noteId, cb) => setPasswordModal({ mode, noteId, onUnlocked: cb })}  // ← thêm dòng này
+                />
                 ))}
               </div>
             </div>
@@ -403,6 +405,7 @@ function HomePage() {
                     onEdit={() => { setSaveStatus("idle"); setActiveNote(note); }}
                     onDelete={() => setDeleteConfirm(note._id)}
                     onTogglePin={e => handleTogglePin(e, note._id)}
+                    onPasswordAction={(mode, noteId, cb) => setPasswordModal({ mode, noteId, onUnlocked: cb })}
                   />
                 ))}
               </div>
@@ -443,6 +446,24 @@ function HomePage() {
         <DeleteConfirmModal
           onCancel={() => setDeleteConfirm(null)}
           onConfirm={() => handleDelete(deleteConfirm)}
+        />
+      )}
+      {/* ══ MODAL: MẬT KHẨU GHI CHÚ ══ */}
+      {passwordModal && (
+        <NotePasswordModal
+          mode={passwordModal.mode}
+          noteId={passwordModal.noteId}
+          onClose={() => setPasswordModal(null)}
+          onSuccess={(data) => {
+            setPasswordModal(null);
+            if (passwordModal.mode === "unlock") {
+              // Thực hiện hành động tiếp theo sau khi nhập đúng mật khẩu
+              passwordModal.onUnlocked?.();
+            } else {
+              // Nếu là bật/tắt/đổi mật khẩu thành công thì render lại danh sách
+              fetchNotes();
+            }
+          }}
         />
       )}
     </div>
