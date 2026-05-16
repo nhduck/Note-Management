@@ -394,3 +394,107 @@
 /* ── Spin animation ─────────────────────────────────── */
 @keyframes spin { to { transform: rotate(360deg); } }
 .spin { display: inline-block; animation: spin 0.8s linear infinite; }
+/* ════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════ */
+
+/* ── Tablet (≤ 900px) ───────────────────────────────── */
+@media (max-width: 900px) {
+  .sidebar {
+    width: 180px;
+  }
+  .notes-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+  .main {
+    padding: 20px 18px;
+  }
+}
+
+/* ── Mobile (≤ 640px) ───────────────────────────────── */
+@media (max-width: 640px) {
+  /* Navbar */
+  .navbar {
+    padding: 0 14px;
+    height: 56px;
+    gap: 10px;
+  }
+  .nav-logo { font-size: 17px; }
+
+  /* Ẩn text logo, chỉ giữ icon nếu muốn — hoặc để nguyên */
+  .search-wrap {
+    max-width: unset;
+    flex: 1;
+  }
+
+  /* View toggle ẩn trên mobile nhỏ */
+  .view-toggle { display: none; }
+
+  /* Page layout: sidebar ẩn thành drawer hoặc ẩn hẳn */
+  .page-layout { position: relative; }
+
+  .sidebar {
+    position: fixed;
+    left: -240px;
+    top: 56px;
+    height: calc(100vh - 56px);
+    width: 220px;
+    z-index: 50;
+    transition: left 0.25s ease;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.12);
+  }
+  .sidebar.sidebar--open {
+    left: 0;
+  }
+
+  /* Main chiếm full width */
+  .main {
+    padding: 16px 14px;
+    width: 100%;
+  }
+
+  .main-header {
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .main-title { font-size: 18px; }
+
+  /* Grid: 1 cột trên mobile nhỏ */
+  .notes-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* Add button: thu gọn */
+  .add-btn {
+    padding: 9px 14px;
+    font-size: 13px;
+  }
+
+  /* Profile popup: mở sang trái để không bị crop */
+  .profile-popup {
+    right: 0;
+    left: auto;
+    min-width: 180px;
+  }
+}
+
+/* ── Small mobile (≤ 400px) ─────────────────────────── */
+@media (max-width: 400px) {
+  .nav-logo span { display: none; } /* ẩn text, giữ icon */
+  .notes-grid {
+    grid-template-columns: 1fr;
+  }
+  .main { padding: 12px 10px; }
+}
+
+/* ── Hamburger (chỉ hiện trên mobile) ────────────────── */
+.hamburger-btn {
+  display: none;
+  color: var(--text-dark);
+  font-size: 22px;
+}
+@media (max-width: 640px) {
+  .hamburger-btn { display: flex; align-items: center; justify-content: center; }
+}
