@@ -28,7 +28,6 @@ const ProfileMenu = ({
             <span className="profile-popup-name" style={{ fontWeight: 'bold', fontSize: '1rem', padding: '0' }}>
               {profile?.username || "Người dùng"}
             </span>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted, #6c757d)' }}>Thành viên</span>
           </div>
         </div>
 

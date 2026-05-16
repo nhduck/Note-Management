@@ -202,7 +202,6 @@ router.patch('/users/:id/avatar', authMiddleware, async (req, res) => {
 router.put('/me/profile', authMiddleware, async (req, res) => {
     try {
         const { username } = req.body;
-        // FIX: dùng req.user._id thay vì req.user.id để tương thích với cả hai cách authMiddleware set
         const userId = req.user?._id || req.user?.id || req.userId;
 
         if (!username || username.trim() === '') {

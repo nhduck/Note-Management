@@ -29,7 +29,7 @@ function HomePage() {
     labels, activeLabel, setActiveLabel,
     searchTerm, setSearchTerm, debouncedSearch,
     activeNote, setActiveNote,
-    profile, saveStatus, setSaveStatus,
+    profile, saveStatus, setSaveStatus, setProfile,
     uploading, uploadingAvatar,
     fetchNotes, fetchLabels,
     handleDelete, handleImageUpload, handleRemoveImage,
@@ -156,7 +156,9 @@ function HomePage() {
         <SecuritySettingsModal
         onClose={() => setShowSecurityModal(false)}
         darkMode={darkMode}
-        profile={profile}/>
+        profile={profile}
+        onProfileUpdate={(updatedProfile) => setProfile(updatedProfile)}
+        />
       )}
     </div>
   );
