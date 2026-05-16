@@ -1,4 +1,3 @@
-import { useState } from "react";
 import "../assets/NoteCardStyle.css"
 
 /* ── Highlight search text ── */
@@ -18,7 +17,6 @@ function HighlightText({ text, searchTerm }) {
 }
 
 function NoteCard({ note, onEdit, onDelete, onTogglePin, searchTerm, onPasswordAction }) {
-  const [hovered, setHovered] = useState(false);
 
   const handleEditClick = () => {
     if (note.password) {
@@ -46,14 +44,12 @@ function NoteCard({ note, onEdit, onDelete, onTogglePin, searchTerm, onPasswordA
   return (
     <div
       className={`note-card ${note.isPinned ? "note-card--pinned" : ""}`}
-      onClick={handleEditClick} // THAY ĐỔI: Sử dụng hàm handleEditClick thay vì onEdit trực tiếp
+      onClick={handleEditClick}
       style={{ "--note-color": note.color || "var(--accent)" }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
     >
       <div className="note-header-icons">
         <button
-          className={`pin-btn ${note.isPinned ? "pin-btn--active" : ""} ${hovered || note.isPinned ? "pin-btn--visible" : ""}`}
+          className={`pin-btn ${note.isPinned ? "pin-btn--active" : ""}`}
           onClick={onTogglePin} title={note.isPinned ? "Bỏ ghim" : "Ghim lên đầu"}
         >
           <i className={`bi ${note.isPinned ? "bi-pin-angle-fill" : "bi-pin-angle"}`} />
@@ -101,29 +97,24 @@ function NoteCard({ note, onEdit, onDelete, onTogglePin, searchTerm, onPasswordA
           
           {/* 5. THÊM CÁC NÚT ĐIỀU KHIỂN MẬT KHẨU PHÙ HỢP VỚI TRẠNG THÁI GHI CHÚ */}
           {!note.password ? (
-            // Nếu chưa có pass: Hiện nút kích hoạt đặt mật khẩu (chế độ enable)
             <button
-              className={`delete-icon-btn ${hovered ? "delete-icon-btn--visible" : ""}`}
-              style={{ color: "#6c757d" }} // Cho màu xám nhẹ sang trọng thay vì màu đỏ của nút xóa
+              className="delete-icon-btn"
               onClick={e => { e.stopPropagation(); onPasswordAction("enable", note._id); }}
               title="Đặt mật khẩu bảo mật"
             >
               <i className="bi bi-shield-lock" />
             </button>
           ) : (
-            // Nếu đã có pass: Hiện nút Đổi mật khẩu (change) và Tắt mật khẩu (disable)
             <>
               <button
-                className={`delete-icon-btn ${hovered ? "delete-icon-btn--visible" : ""}`}
-                style={{ color: "#0d6efd" }} // Màu xanh dương cho tính năng chỉnh sửa/đổi pass
+                className="delete-icon-btn"
                 onClick={e => { e.stopPropagation(); onPasswordAction("change", note._id); }}
                 title="Thay đổi mật khẩu cũ"
               >
                 <i className="bi bi-key" />
               </button>
               <button
-                className={`delete-icon-btn ${hovered ? "delete-icon-btn--visible" : ""}`}
-                style={{ color: "#198754" }} // Màu xanh lá cho tính năng gỡ khóa an toàn
+                className="delete-icon-btn"
                 onClick={e => { e.stopPropagation(); onPasswordAction("disable", note._id); }}
                 title="Tắt bỏ bảo mật mật khẩu"
               >
@@ -132,10 +123,9 @@ function NoteCard({ note, onEdit, onDelete, onTogglePin, searchTerm, onPasswordA
             </>
           )}
 
-          {/* NÚT XÓA GỐC: Đổi sự kiện onClick sang hàm handleCheck bảo mật */}
           <button
-            className={`delete-icon-btn ${hovered ? "delete-icon-btn--visible" : ""}`}
-            onClick={handleDeleteClick} 
+            className="delete-icon-btn delete-icon-btn--danger"
+            onClick={handleDeleteClick}
             title="Xóa ghi chú"
           >
             <i className="bi bi-trash3-fill" />
