@@ -1,6 +1,7 @@
 import { useState } from "react";
 import "../assets/NotePasswordStyle.css";
 
+// Helper functions to retrieve token and set headers for authenticated API updates
 const getToken    = () => localStorage.getItem("token") || "";
 const authHeaders = () => ({
   "Content-Type": "application/json",
@@ -8,56 +9,59 @@ const authHeaders = () => ({
 });
 
 /* ═══════════════════════════════════════════════════════
-   MODE:
-     "enable"  – note chưa có password → bật (nhập 2 lần)
-     "disable" – note đang có password → tắt (nhập password hiện tại)
-     "change"  – đổi password (nhập cũ → nhập mới 2 lần)
-     "unlock"  – mở khoá để xem/sửa/xoá note (nhập password)
+   MODE OVERVIEW:
+     "enable"  – Note has no password → turn it on (input twice)
+     "disable" – Note is protected    → turn it off (input current password)
+     "change"  – Update password      → (input current → input new password twice)
+     "unlock"  – Open note to view/edit/delete (input password)
 ═══════════════════════════════════════════════════════ */
 function NotePasswordModal({ mode, noteId, onClose, onSuccess }) {
+  // Local input field and operational control states
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw]         = useState("");
   const [confirmPw, setConfirmPw] = useState("");
   const [error, setError]         = useState("");
   const [loading, setLoading]     = useState(false);
 
+  // States to toggle password visibility (masked text vs plain text)
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew]         = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
   const clearError = () => setError("");
 
+  // Main Form Submitter: Validates constraints and patches data to the server
   const handleSubmit = async () => {
     setError("");
 
-    // ── Validation theo từng mode ────────────────────────
+    // ── Input Field Validations by Workflow Mode ────────────────────────
     if (mode === "enable") {
-      if (!newPw)               return setError("Vui lòng nhập mật khẩu.");
-      if (newPw.length < 6)    return setError("Mật khẩu phải có ít nhất 6 ký tự.");
-      if (newPw !== confirmPw) return setError("Mật khẩu xác nhận không khớp.");
+      if (!newPw)       return setError("Please enter a password.");
+      if (newPw.length < 6)    return setError("Password must be at least 6 characters long.");
+      if (newPw !== confirmPw) return setError("Passwords do not match.");
     }
     if (mode === "disable") {
-      if (!currentPw) return setError("Vui lòng nhập mật khẩu hiện tại để xác nhận.");
+      if (!currentPw) return setError("Please enter your current password to confirm.");
     }
     if (mode === "change") {
-      if (!currentPw)            return setError("Vui lòng nhập mật khẩu hiện tại.");
-      if (!newPw)                return setError("Vui lòng nhập mật khẩu mới.");
-      if (newPw.length < 6)     return setError("Mật khẩu mới phải có ít nhất 6 ký tự.");
-      if (newPw !== confirmPw)  return setError("Mật khẩu xác nhận không khớp.");
-      if (currentPw === newPw)  return setError("Mật khẩu mới phải khác mật khẩu hiện tại.");
+      if (!currentPw)          return setError("Please enter your current password.");
+      if (!newPw)              return setError("Please enter a new password.");
+      if (newPw.length < 6)     return setError("New password must be at least 6 characters long.");
+      if (newPw !== confirmPw)  return setError("Passwords do not match.");
+      if (currentPw === newPw)  return setError("New password must be different from current password.");
     }
     if (mode === "unlock") {
-      if (!currentPw) return setError("Vui lòng nhập mật khẩu để mở khoá.");
+      if (!currentPw) return setError("Please enter the password to unlock.");
     }
 
-    // ── Build payload ────────────────────────────────────
+    // ── Construct Request Payload Structure ────────────────────────────────────
     const payload = { action: mode };
     if (mode === "enable")  payload.password = newPw;
     if (mode === "disable") payload.currentPassword = currentPw;
     if (mode === "change")  { payload.currentPassword = currentPw; payload.newPassword = newPw; }
     if (mode === "unlock")  payload.password = currentPw;
 
-    // ── Gọi API ──────────────────────────────────────────
+    // ── Trigger API Dispatch Pipeline ──────────────────────────────────────────
     setLoading(true);
     try {
       const res  = await fetch(`/api/notes/${noteId}/password`, {
@@ -66,27 +70,28 @@ function NotePasswordModal({ mode, noteId, onClose, onSuccess }) {
         body:    JSON.stringify(payload),
       });
       const data = await res.json();
-      if (!res.ok) return setError(data.error || "Thao tác thất bại. Vui lòng thử lại.");
-      onSuccess(data);
+      if (!res.ok) return setError(data.error || "Action failed. Please try again.");
+      onSuccess(data); // Notify parent component of successful change
     } catch {
-      setError("Lỗi kết nối. Vui lòng thử lại.");
+      setError("Connection error. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
+  // Dynamic UI Theme Configurations mapping localized labels based on current operation mode
   const cfg = {
-    enable:  { icon: "bi-lock-fill",        cls: "npm-icon--purple", title: "Bật bảo vệ mật khẩu", btnLabel: "Bật bảo vệ",   btnCls: "npm-btn--primary" },
-    disable: { icon: "bi-unlock-fill",      cls: "npm-icon--danger",  title: "Tắt bảo vệ mật khẩu", btnLabel: "Tắt bảo vệ",   btnCls: "npm-btn--danger"  },
-    change:  { icon: "bi-key-fill",         cls: "npm-icon--purple", title: "Đổi mật khẩu ghi chú", btnLabel: "Lưu mật khẩu", btnCls: "npm-btn--primary" },
-    unlock:  { icon: "bi-shield-lock-fill", cls: "npm-icon--purple", title: "Nhập mật khẩu",         btnLabel: "Mở khoá",      btnCls: "npm-btn--primary" },
+    enable:  { icon: "bi-lock-fill",        cls: "npm-icon--purple", title: "Enable Password Protection", btnLabel: "Protect Note",   btnCls: "npm-btn--primary" },
+    disable: { icon: "bi-unlock-fill",      cls: "npm-icon--danger",  title: "Disable Password Protection", btnLabel: "Remove Protection",   btnCls: "npm-btn--danger"  },
+    change:  { icon: "bi-key-fill",         cls: "npm-icon--purple", title: "Change Note Password", btnLabel: "Save Password", btnCls: "npm-btn--primary" },
+    unlock:  { icon: "bi-shield-lock-fill", cls: "npm-icon--purple", title: "Enter Password",         btnLabel: "Unlock Note",      btnCls: "npm-btn--primary" },
   }[mode];
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="npm-modal" onClick={e => e.stopPropagation()}>
 
-        {/* ── Header ── */}
+        {/* ── HEADER SECTION ── */}
         <div className="npm-header">
           <div className="npm-header-left">
             <div className={`npm-icon-wrap ${cfg.cls}`}>
@@ -99,31 +104,31 @@ function NotePasswordModal({ mode, noteId, onClose, onSuccess }) {
           </button>
         </div>
 
-        {/* ── Body ── */}
+        {/* ── BODY FORM SECTION ── */}
         <div className="npm-body">
 
-          {/* Mô tả */}
+          {/* Conditional Guidance Descriptions */}
           {mode === "enable" && (
             <p className="npm-desc">
-              <i className="bi bi-info-circle" /> Ghi chú sẽ yêu cầu mật khẩu trước khi xem, sửa hoặc xoá.
+              <i className="bi bi-info-circle" /> This note will require a password before it can be viewed, edited, or deleted.
             </p>
           )}
           {mode === "disable" && (
             <p className="npm-desc npm-desc--warning">
-              <i className="bi bi-exclamation-triangle" /> Nhập mật khẩu hiện tại để xác nhận tắt bảo vệ.
+              <i className="bi bi-exclamation-triangle" /> Enter your current password to confirm removing security protection.
             </p>
           )}
           {mode === "unlock" && (
             <p className="npm-desc">
-              <i className="bi bi-lock" /> Ghi chú này được bảo vệ. Nhập mật khẩu để tiếp tục.
+              <i className="bi bi-lock" /> This note is protected. Enter the password to continue.
             </p>
           )}
 
-          {/* Current password — disable / change / unlock */}
+          {/* Current Password Field: Rendered during disable, change, or unlock tasks */}
           {(mode === "disable" || mode === "change" || mode === "unlock") && (
             <PasswordField
-              label={mode === "unlock" ? "Mật khẩu" : "Mật khẩu hiện tại"}
-              placeholder={mode === "unlock" ? "Nhập mật khẩu..." : "Nhập mật khẩu hiện tại..."}
+              label={mode === "unlock" ? "Password" : "Current Password"}
+              placeholder={mode === "unlock" ? "Enter password..." : "Enter current password..."}
               icon="bi-lock"
               value={currentPw}
               show={showCurrent}
@@ -134,12 +139,12 @@ function NotePasswordModal({ mode, noteId, onClose, onSuccess }) {
             />
           )}
 
-          {/* New password — enable / change */}
+          {/* New Password Field: Rendered during entry creation or adjustment workflows */}
           {(mode === "enable" || mode === "change") && (
             <>
               <PasswordField
-                label={mode === "change" ? "Mật khẩu mới" : "Mật khẩu"}
-                placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)..."
+                label={mode === "change" ? "New Password" : "Password"}
+                placeholder="Enter password (min 6 characters)..."
                 icon="bi-key"
                 value={newPw}
                 show={showNew}
@@ -151,11 +156,11 @@ function NotePasswordModal({ mode, noteId, onClose, onSuccess }) {
             </>
           )}
 
-          {/* Confirm password — enable / change */}
+          {/* Password Confirmation Field: Checks entry parity */}
           {(mode === "enable" || mode === "change") && (
             <PasswordField
-              label="Xác nhận mật khẩu"
-              placeholder="Nhập lại mật khẩu..."
+              label="Confirm Password"
+              placeholder="Re-enter password..."
               icon="bi-lock-fill"
               value={confirmPw}
               show={showConfirm}
@@ -167,7 +172,7 @@ function NotePasswordModal({ mode, noteId, onClose, onSuccess }) {
             />
           )}
 
-          {/* Error */}
+          {/* Action Validation Error Display */}
           {error && (
             <div className="npm-error">
               <i className="bi bi-exclamation-circle-fill" />
@@ -176,10 +181,10 @@ function NotePasswordModal({ mode, noteId, onClose, onSuccess }) {
           )}
         </div>
 
-        {/* ── Footer ── */}
+        {/* ── FOOTER ACTIONS ── */}
         <div className="npm-footer">
           <button className="npm-btn npm-btn--cancel" onClick={onClose} disabled={loading}>
-            Huỷ bỏ
+            Cancel
           </button>
           <button
             className={`npm-btn ${cfg.btnCls} ${loading ? "npm-btn--loading" : ""}`}
@@ -187,7 +192,7 @@ function NotePasswordModal({ mode, noteId, onClose, onSuccess }) {
             disabled={loading}
           >
             {loading
-              ? <><i className="bi bi-arrow-repeat npm-spin" /> Đang xử lý...</>
+              ? <><i className="bi bi-arrow-repeat npm-spin" /> Processing...</>
               : <><i className={`bi ${cfg.icon}`} /> {cfg.btnLabel}</>}
           </button>
         </div>
@@ -196,7 +201,7 @@ function NotePasswordModal({ mode, noteId, onClose, onSuccess }) {
   );
 }
 
-/* ── Reusable password input field ────────────────────── */
+/* ── Reusable password input field component ────────────────────── */
 function PasswordField({ label, placeholder, icon, value, show, onToggleShow, onChange, onEnter, autoFocus, matchValue, showMatchIcon }) {
   const hasMatch = showMatchIcon && value.length > 0;
   const isMatch  = value === matchValue;
@@ -218,6 +223,7 @@ function PasswordField({ label, placeholder, icon, value, show, onToggleShow, on
         <button className="npm-eye-btn" type="button" onClick={onToggleShow} tabIndex={-1}>
           <i className={`bi ${show ? "bi-eye-slash" : "bi-eye"}`} />
         </button>
+        {/* Verification Checkmark or Cross Indicator Overlay */}
         {hasMatch && (
           <i className={`npm-match-icon bi ${isMatch ? "bi-check-circle-fill npm-match-icon--ok" : "bi-x-circle-fill npm-match-icon--err"}`} />
         )}
@@ -226,8 +232,9 @@ function PasswordField({ label, placeholder, icon, value, show, onToggleShow, on
   );
 }
 
-/* ── Password strength indicator ──────────────────────── */
+/* ── Password complexity strength indicator ──────────────────────── */
 function PasswordStrength({ password }) {
+  // Generates safety weight points checking length and regex validation requirements
   const score = [
     password.length >= 6,
     password.length >= 10,
@@ -236,12 +243,13 @@ function PasswordStrength({ password }) {
     /[^A-Za-z0-9]/.test(password),
   ].filter(Boolean).length;
 
-  const levels = ["Rất yếu", "Yếu", "Trung bình", "Mạnh", "Rất mạnh"];
+  const levels = ["Very Weak", "Weak", "Medium", "Strong", "Very Strong"];
   const clsMap = ["strength--1", "strength--2", "strength--3", "strength--4", "strength--5"];
   const idx    = Math.min(score, 4);
 
   return (
     <div className="npm-strength">
+      {/* Structural visual bars reflecting current safety metric array mapping */}
       <div className="npm-strength-bars">
         {clsMap.map((cls, i) => (
           <div key={i} className={`npm-strength-bar ${i < score ? clsMap[idx] : ""}`} />

@@ -245,3 +245,27 @@
   white-space: nowrap;
 }
 .editor-done-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+/* ── Responsive Modal ────────────────────────────────── */
+@media (max-width: 640px) {
+  .editor-modal {
+    width: 100%;
+    max-width: 100%;
+    max-height: 100dvh;
+    border-radius: 20px 20px 0 0;
+    margin-top: auto;
+  }
+  .modal-overlay {
+    align-items: flex-end; /* modal trượt lên từ dưới trên mobile */
+  }
+  .editor-header { padding: 16px 18px 12px; }
+  .editor-body   { padding: 14px 18px; }
+  .editor-footer { padding: 12px 18px 20px; flex-wrap: wrap; gap: 8px; }
+  .editor-status { font-size: 11px; }
+  .editor-done-btn { padding: 9px 16px; font-size: 13px; }
+}
+
+@media (max-width: 400px) {
+  .editor-content { min-height: 120px; }
+  .upload-btn     { padding: 6px 10px; font-size: 12px; }
+}

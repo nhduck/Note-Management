@@ -10,16 +10,16 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Tự động chuyển hướng từ "/" sang "/login" */}
+        {/* Automate implicit redirection bounce from "/" down to "/login" */}
         <Route path="/" element={<Navigate to="/login" replace />} />
 
-        {/* Public Routes */}
+        {/* Public Application Routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgotPassword" element={<ForgotPassPage />} />
         <Route path="/verify-otp" element={<VerifyOtpPage />} />
 
-        {/* Protected Route */}
+        {/* Protected Authenticated Session Routes */}
         <Route
           path="/home"
           element={

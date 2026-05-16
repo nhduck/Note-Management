@@ -1,11 +1,9 @@
 import { useState, useEffect } from "react";
 import "../assets/HomeStyle.css";
 
-// Hooks & Components
 import { useNotesLogic } from "../hooks/useNotesLogic";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
-
 import NoteCard from "../components/NoteCard";
 import EditorModal from "../components/EditorModal";
 import LabelManagerModal from "../components/LabelManagerModal";
@@ -15,16 +13,19 @@ import UserPreferencesModal, { loadPrefs, applyPrefs } from "../components/UserP
 import SecuritySettingsModal from "../components/SecuritySettingsModal";
 
 function HomePage() {
-  const [viewMode, setViewMode] = useState("grid");
-  const [darkMode, setDarkMode] = useState(false);
+  const [viewMode, setViewMode]         = useState("grid"); // "grid" | "list"
+  const [darkMode, setDarkMode]         = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [showLabelManager, setShowLabelManager] = useState(false);
-  const [showLabelPicker, setShowLabelPicker] = useState(false);
-  const [passwordModal, setPasswordModal] = useState(null);
-  const [showPreferences, setShowPreferences] = useState(false);
+  const [showLabelPicker, setShowLabelPicker]   = useState(false);
+  const [passwordModal, setPasswordModal]       = useState(null);
+  const [showPreferences, setShowPreferences]   = useState(false);
   const [showSecurityModal, setShowSecurityModal] = useState(false);
 
-  // Áp dụng prefs đã lưu khi app khởi động
+  // Mobile drawer sidebar responsive layout state flags
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Initialize application viewport styling context with stored local values on mount
   useEffect(() => { applyPrefs(loadPrefs()); }, []);
 
   const {
@@ -36,22 +37,20 @@ function HomePage() {
     fetchNotes, fetchLabels,
     handleDelete, handleImageUpload, handleRemoveImage,
     handleTogglePin, handleAvatarChange, handleLogout, handleToggleLabelOnNote,
-    filteredNotes
+    filteredNotes,
   } = useNotesLogic();
 
-  const handleSecuritySettings = () => {
-    setShowSecurityModal(true);
-  };
+  const handleSecuritySettings = () => setShowSecurityModal(true);
 
-  const pinnedNotes = filteredNotes.filter(n => n.isPinned);
+  const pinnedNotes   = filteredNotes.filter(n => n.isPinned);
   const unpinnedNotes = filteredNotes.filter(n => !n.isPinned);
-  const pageTitle = activeLabel ? `Nhãn: ${activeLabel.name}` : "Ghi chú của tôi";
+  const pageTitle     = activeLabel ? `Label: ${activeLabel.name}` : "My Notes";
 
   const closeEditor = () => { setActiveNote(null); setShowLabelPicker(false); };
 
   return (
     <div className={`app-wrapper ${darkMode ? "dark" : ""}`}>
-      {/* ── NAVBAR ── */}
+      {/* ── NAVBAR NAVIGATION HEADER ── */}
       <Navbar
         searchTerm={searchTerm} setSearchTerm={setSearchTerm}
         darkMode={darkMode} setDarkMode={setDarkMode}
@@ -60,44 +59,58 @@ function HomePage() {
         handleAvatarChange={handleAvatarChange} handleLogout={handleLogout}
         onOpenPreferences={() => setShowPreferences(true)}
         handleSecuritySettings={handleSecuritySettings}
+        sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}
       />
 
       <div className="page-layout">
-        {/* ── SIDEBAR ── */}
+        {/* ── SIDEBAR DRAWER PANEL ── */}
         <Sidebar
           labels={labels}
           activeLabel={activeLabel}
           setActiveLabel={setActiveLabel}
           setShowLabelManager={setShowLabelManager}
           handleSecuritySettings={handleSecuritySettings}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
         />
 
-        {/* ── MAIN CONTENT ── */}
+        {/* ── MAIN CONTENT VIEWER AREA ── */}
         <main className="main">
           <div className="main-header">
             <div>
               <div className="main-title">{pageTitle}</div>
               <div className="main-count">
                 {debouncedSearch
-                  ? `${filteredNotes.length} kết quả cho "${debouncedSearch}"`
-                  : `${filteredNotes.length} ghi chú`}
+                  ? `${filteredNotes.length} results for "${debouncedSearch}"`
+                  : `${filteredNotes.length} notes`}
               </div>
             </div>
-            <button className="add-btn" onClick={() => { setSaveStatus("idle"); setActiveNote({ title: "", content: "", images: [], labels: [], color: loadPrefs().noteColor }); }}>
-              <i className="bi bi-plus-lg" /> Mới
+            <button
+              className="add-btn"
+              onClick={() => {
+                setSaveStatus("idle");
+                setActiveNote({ title: "", content: "", images: [], labels: [], color: loadPrefs().noteColor });
+              }}
+            >
+              <i className="bi bi-plus-lg" /> New Note
             </button>
           </div>
 
+          {/* FALLBACK STATUS VIEW: Empty search query result feedback overlay */}
           {debouncedSearch && filteredNotes.length === 0 && (
             <div className="search-empty">
               <i className="bi bi-search" />
-              <p>Không tìm thấy ghi chú nào cho <strong>"{debouncedSearch}"</strong></p>
+              <p>No notes found for <strong>"{debouncedSearch}"</strong></p>
             </div>
           )}
 
+          {/* DOCUMENT SECTION 1: PINNED NOTES GRID/LIST COMPOSITION */}
           {pinnedNotes.length > 0 && (
             <div className="notes-section">
-              <div className="section-label"><i className="bi bi-pin-angle-fill" /> Đã ghim <span className="section-count">{pinnedNotes.length}</span></div>
+              <div className="section-label">
+                <i className="bi bi-pin-angle-fill" /> Pinned{" "}
+                <span className="section-count">{pinnedNotes.length}</span>
+              </div>
               <div className={viewMode === "grid" ? "notes-grid" : "notes-list"}>
                 {pinnedNotes.map(note => (
                   <NoteCard key={note._id} note={note} searchTerm={debouncedSearch}
@@ -111,9 +124,15 @@ function HomePage() {
             </div>
           )}
 
+          {/* DOCUMENT SECTION 2: UNPINNED REMAINING NOTES COMPOSITION */}
           {unpinnedNotes.length > 0 && (
             <div className="notes-section">
-              {pinnedNotes.length > 0 && <div className="section-label"><i className="bi bi-journal-text" /> Khác <span className="section-count">{unpinnedNotes.length}</span></div>}
+              {pinnedNotes.length > 0 && (
+                <div className="section-label">
+                  <i className="bi bi-journal-text" /> Others{" "}
+                  <span className="section-count">{unpinnedNotes.length}</span>
+                </div>
+              )}
               <div className={viewMode === "grid" ? "notes-grid" : "notes-list"}>
                 {unpinnedNotes.map(note => (
                   <NoteCard key={note._id} note={note} searchTerm={debouncedSearch}
@@ -129,7 +148,7 @@ function HomePage() {
         </main>
       </div>
 
-      {/* ── MODALS ── */}
+      {/* ── CONDITIONAL MODAL OVERLAYS LIFECYCLE CONTROLS ── */}
       {activeNote && (
         <EditorModal
           activeNote={activeNote} setActiveNote={setActiveNote}
@@ -140,10 +159,17 @@ function HomePage() {
         />
       )}
       {showLabelManager && (
-        <LabelManagerModal labels={labels} userId={profile?.id} onClose={() => setShowLabelManager(false)} onChanged={() => { fetchLabels(); fetchNotes(); }} />
+        <LabelManagerModal
+          labels={labels} userId={profile?.id}
+          onClose={() => setShowLabelManager(false)}
+          onChanged={() => { fetchLabels(); fetchNotes(); }}
+        />
       )}
       {deleteConfirm && (
-        <DeleteConfirmModal onCancel={() => setDeleteConfirm(null)} onConfirm={() => { handleDelete(deleteConfirm); setDeleteConfirm(null); }} />
+        <DeleteConfirmModal
+          onCancel={() => setDeleteConfirm(null)}
+          onConfirm={() => { handleDelete(deleteConfirm); setDeleteConfirm(null); }}
+        />
       )}
       {passwordModal && (
         <NotePasswordModal

@@ -167,3 +167,19 @@ body {
     margin: 1rem;
   }
 }
+
+/* ── Responsive bổ sung ─────────────────────────────── */
+@media (max-width: 480px) {
+  .form-side {
+    padding: 24px 16px;
+    min-height: 100svh;
+    align-items: flex-start;
+    padding-top: 36px;
+  }
+  .register-card {
+    padding: 28px 20px;
+    border-radius: 14px;
+    max-width: 100%;
+  }
+  .card-title { font-size: 22px; }
+}

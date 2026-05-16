@@ -143,3 +143,19 @@ body {
     margin: 16px;
   }
 }
+/* ── Responsive bổ sung ─────────────────────────────── */
+@media (max-width: 480px) {
+  .form-side {
+    padding: 24px 16px;
+    min-height: 100svh; /* safe-area aware height */
+    align-items: flex-start;
+    padding-top: 40px;
+  }
+  .login-card {
+    padding: 28px 20px;
+    border-radius: 14px;
+    max-width: 100%;
+  }
+  .card-title { font-size: 22px; }
+  .btn-submit { padding: 12px; font-size: 14px; }
+}

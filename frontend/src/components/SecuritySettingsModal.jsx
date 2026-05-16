@@ -4,7 +4,7 @@ import "../assets/SecuritySettingsModalStyle.css";
 const SecuritySettingsModal = ({ onClose, darkMode, profile, onProfileUpdate }) => {
   const [activeTab, setActiveTab] = useState("personal");
 
-  // Các State nhập liệu độc lập
+  // Independent form input states
   const [username, setUsername] = useState(profile?.username || "");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -13,10 +13,10 @@ const SecuritySettingsModal = ({ onClose, darkMode, profile, onProfileUpdate }) 
 
   const token = localStorage.getItem("token");
 
-  // 1. XỬ LÝ CẬP NHẬT THÔNG TIN CÁ NHÂN
+  // 1. HANDLER: UPDATE PERSONAL PROFILE INFORMATION
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
-    if (!username.trim()) return alert("Tên hiển thị không được để trống.");
+    if (!username.trim()) return alert("Display name cannot be empty.");
 
     try {
       const response = await fetch("/api/me/profile", {
@@ -30,18 +30,18 @@ const SecuritySettingsModal = ({ onClose, darkMode, profile, onProfileUpdate }) 
       const updatedProfile = { ...profile, username: data.user.username };
       localStorage.setItem("user", JSON.stringify(updatedProfile));
       onProfileUpdate?.(updatedProfile);
-      alert("Cập nhật thành công!");
+      alert("Profile updated successfully!");
     } catch (err) {
       alert(err.message);
     }
   };
 
-  // 2. XỬ LÝ ĐỔI MẬT KHẨU
+  // 2. HANDLER: CHANGE USER PASSWORD
   const handleChangePassword = async (e) => {
     e.preventDefault();
-    if (!currentPassword || !newPassword || !confirmPassword) return alert("Vui lòng nhập đủ thông tin.");
-    if (newPassword.length < 6) return alert("Mật khẩu phải từ 6 ký tự.");
-    if (newPassword !== confirmPassword) return alert("Mật khẩu mới không trùng khớp.");
+    if (!currentPassword || !newPassword || !confirmPassword) return alert("Please fill in all fields.");
+    if (newPassword.length < 6) return alert("Password must be at least 6 characters long.");
+    if (newPassword !== confirmPassword) return alert("New passwords do not match.");
 
     try {
       const response = await fetch("/api/me/change-password", {
@@ -52,7 +52,7 @@ const SecuritySettingsModal = ({ onClose, darkMode, profile, onProfileUpdate }) 
       const data = await response.json();
       if (!response.ok) throw new Error(data.message);
 
-      alert("Đổi mật khẩu thành công!");
+      alert("Password updated successfully!");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -61,11 +61,11 @@ const SecuritySettingsModal = ({ onClose, darkMode, profile, onProfileUpdate }) 
     }
   };
 
-  // 3. XỬ LÝ XÓA TÀI KHOẢN
+  // 3. HANDLER: PERMANENT ACCOUNT DELETION
   const handleDeleteAccount = async (e) => {
     e.preventDefault();
-    if (confirmText !== "XACNHAN") return alert("Vui lòng nhập đúng chữ XACNHAN.");
-    if (!window.confirm("Bạn có chắc chắn muốn xóa vĩnh viễn tài khoản?")) return;
+    if (confirmText !== "CONFIRM") return alert("Please type the exact phrase CONFIRM.");
+    if (!window.confirm("Are you sure you want to permanently delete your account? This action cannot be undone.")) return;
 
     try {
       const response = await fetch("/api/me/delete-account", {
@@ -76,7 +76,7 @@ const SecuritySettingsModal = ({ onClose, darkMode, profile, onProfileUpdate }) 
       const data = await response.json();
       if (!response.ok) throw new Error(data.message);
 
-      alert("Tài khoản của bạn đã được xóa.");
+      alert("Your account has been deleted.");
       localStorage.removeItem("token");
       window.location.href = "/login";
     } catch (err) {
@@ -88,79 +88,79 @@ const SecuritySettingsModal = ({ onClose, darkMode, profile, onProfileUpdate }) 
     <div className="security-modal-overlay" onClick={onClose}>
       <div className={`security-modal-content ${darkMode ? "security-modal-content--dark" : ""}`} onClick={(e) => e.stopPropagation()}>
         
-        {/* Nút X đóng modal */}
+        {/* Modal Close Anchor */}
         <button className="security-modal-close" onClick={onClose}>
           <i className="bi bi-x-lg"></i>
         </button>
 
         <div className="security-modal-layout">
-          {/* CỘT TRÁI: MENU TABS */}
+          {/* LEFT COLUMN: NAVIGATION SIDEBAR TABS */}
           <div className="security-modal-sidebar">
-            <h3 className="security-modal-title">Cài đặt</h3>
+            <h3 className="security-modal-title">Settings</h3>
             <ul className="security-tabs">
               <li className={activeTab === "personal" ? "active" : ""} onClick={() => setActiveTab("personal")}>
-                <i className="bi bi-person"></i> Thông tin cá nhân
+                <i className="bi bi-person"></i> Personal Info
               </li>
               <li className={activeTab === "password" ? "active" : ""} onClick={() => setActiveTab("password")}>
-                <i className="bi bi-key"></i> Đổi mật khẩu
+                <i className="bi bi-key"></i> Change Password
               </li>
               <li className={`tab-danger ${activeTab === "delete" ? "active" : ""}`} onClick={() => setActiveTab("delete")}>
-                <i className="bi bi-trash"></i> Xóa tài khoản
+                <i className="bi bi-trash"></i> Delete Account
               </li>
             </ul>
           </div>
 
-          {/* CỘT PHẢI: NỘI DUNG TƯƠNG ỨNG */}
+          {/* RIGHT COLUMN: CORRESPONDING FORM PANEL VIEWS */}
           <div className="security-modal-body">
 
-            {/* TAB 1: THÔNG TIN CÁ NHÂN */}
+            {/* TAB PANEL 1: PERSONAL INFORMATION */}
             {activeTab === "personal" && (
               <form className="tab-pane" onSubmit={handleUpdateProfile}>
-                <h4>Thông tin cá nhân</h4>
+                <h4>Personal Information</h4>
                 <div className="form-group">
-                  <label>Tên hiển thị</label>
+                  <label>Display Name</label>
                   <input type="text" className="form-control" value={username} onChange={(e) => setUsername(e.target.value)} />
                 </div>
                 <div className="form-group mt-3">
-                  <label>Email</label>
+                  <label>Email Address</label>
                   <input type="email" className="form-control" defaultValue={profile?.email || ""} disabled />
                 </div>
-                <button type="submit" className="btn-save mt-4">Lưu thay đổi</button>
+                <button type="submit" className="btn-save mt-4">Save Changes</button>
               </form>
             )}
 
-            {/* TAB 2: ĐỔI MẬT KHẨU */}
+            {/* TAB PANEL 2: PASSWORD CHANGE MANAGEMENT */}
             {activeTab === "password" && (
               <form className="tab-pane" onSubmit={handleChangePassword}>
-                <h4>Đổi mật khẩu</h4>
+                <h4>Change Password</h4>
                 <div className="form-group">
-                  <label>Mật khẩu hiện tại</label>
-                  <input type="password" className="form-control" placeholder="Nhập mật khẩu cũ..." value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+                  <label>Current Password</label>
+                  <input type="password" className="form-control" placeholder="Enter current password..." value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
                 </div>
                 <div className="form-group mt-3">
-                  <label>Mật khẩu mới</label>
-                  <input type="password" className="form-control" placeholder="Mật khẩu mới..." value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                  <label>New Password</label>
+                  <input type="password" className="form-control" placeholder="Enter new password..." value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
                 </div>
                 <div className="form-group mt-3">
-                  <label>Xác nhận mật khẩu mới</label>
-                  <input type="password" className="form-control" placeholder="Nhập lại mật khẩu mới..." value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                  <label>Confirm New Password</label>
+                  <input type="password" className="form-control" placeholder="Re-enter new password..." value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
                 </div>
-                <button type="submit" className="btn-save mt-4">Cập nhật mật khẩu</button>
+                <button type="submit" className="btn-save mt-4">Update Password</button>
               </form>
             )}
 
-            {/* TAB 3: XÓA TÀI KHOẢN */}
+            {/* TAB PANEL 3: DANGER ACCOUNT REMOVAL */}
             {activeTab === "delete" && (
               <form className="tab-pane" onSubmit={handleDeleteAccount}>
-                <h4 className="text-danger">Xóa tài khoản</h4>
+                <h4 className="text-danger">Delete Account</h4>
                 <div className="alert-danger mt-3">
-                  <strong>Cảnh báo:</strong> Việc xóa tài khoản là vĩnh viễn và không thể khôi phục.
+                  <strong>Warning:</strong> Account deletion is permanent and cannot be recovered under any circumstances.
                 </div>
                 <div className="form-group mt-4">
-                  <label>Nhập chữ <strong>XACNHAN</strong> để tiếp tục:</label>
-                  <input type="text" className="form-control" placeholder="XACNHAN" value={confirmText} onChange={(e) => setConfirmText(e.target.value)} />
+                  <label>Type <strong>CONFIRM</strong> to proceed:</label>
+                  <input type="text" className="form-control" placeholder="CONFIRM" value={confirmText} onChange={(e) => setConfirmText(e.target.value)} />
                 </div>
-                <button type="submit" className="btn-delete-account mt-4">Xóa vĩnh viễn tài khoản</button>
+                <button type="submit" className="btn-delete-account mt-4">Permanently Delete Account</button>
               </form>
             )}
 

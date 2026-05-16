@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 
+// Helper functions to retrieve token and set headers for authenticated API configurations
 const getToken = () => localStorage.getItem("token") || "";
 const authHeaders = () => ({
   "Content-Type": "application/json",
@@ -14,18 +15,19 @@ export function useNotesLogic() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [activeNote, setActiveNote] = useState(null);
   const [profile, setProfile] = useState(null);
-  const [saveStatus, setSaveStatus] = useState("idle");
+  const [saveStatus, setSaveStatus] = useState("idle"); // "idle" | "saving" | "saved"
   const [uploading, setUploading] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
-  // ── Auth ──
+  // ── Authentication Check ──
+  // Reads client identity profiles from storage on initialization; redirects on absence
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
     if (savedUser) setProfile(JSON.parse(savedUser));
     else window.location.href = "/";
   }, []);
 
-  // ── Fetch data ──
+  // ── Remote Data Synchronization ──
   const fetchNotes = useCallback(async () => {
     if (!profile) return;
     try {
@@ -35,7 +37,7 @@ export function useNotesLogic() {
       const res = await fetch(url, { headers: { Authorization: `Bearer ${getToken()}` } });
       const data = await res.json();
       if (res.ok) setNotes(data.notes);
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error("Error fetching notes:", err); }
   }, [profile, activeLabel]);
 
   const fetchLabels = useCallback(async () => {
@@ -46,19 +48,21 @@ export function useNotesLogic() {
       });
       const data = await res.json();
       if (res.ok) setLabels(data.labels);
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error("Error fetching labels:", err); }
   }, [profile]);
 
   useEffect(() => { fetchNotes(); }, [fetchNotes]);
   useEffect(() => { fetchLabels(); }, [fetchLabels]);
 
-  // ── Search Debounce ──
+  // ── Search Input Debouncing ──
+  // Regulates expensive execution sequences by introducing a 300ms execution buffer delay
   useEffect(() => {
     const h = setTimeout(() => setDebouncedSearch(searchTerm), 300);
     return () => clearTimeout(h);
   }, [searchTerm]);
 
-  // ── Auto-save ──
+  // ── Automated Note Auto-save ──
+  // Listens to note mutations and batches data packages to persistent layers automatically
   useEffect(() => {
     if (!activeNote || (!activeNote.title && !activeNote.content)) return;
     setSaveStatus("saving");
@@ -88,7 +92,7 @@ export function useNotesLogic() {
     return () => clearTimeout(t);
   }, [activeNote, fetchNotes]);
 
-  // ── Xử lý Hành động (Handlers) ──
+  // ── Event Handlers ──
   const handleDelete = async (id) => {
     try {
       const res = await fetch(`/api/notes/${id}`, {
@@ -96,7 +100,7 @@ export function useNotesLogic() {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
       if (res.ok) fetchNotes();
-    } catch { alert("Xóa thất bại!"); }
+    } catch { alert("Deletion failed!"); }
   };
 
   const handleImageUpload = async (e) => {
@@ -116,9 +120,9 @@ export function useNotesLogic() {
         setActiveNote(prev => ({ ...prev, images: [...(prev.images || []), ...data.urls] }));
         setSaveStatus("saving");
       } else {
-        alert("Upload ảnh thất bại.");
+        alert("Image upload failed.");
       }
-    } catch (err) { alert("Lỗi kết nối khi upload ảnh."); } 
+    } catch (err) { alert("Network connection error while uploading images."); } 
     finally {
       setUploading(false);
       e.target.value = "";
@@ -138,7 +142,7 @@ export function useNotesLogic() {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
       if (res.ok) await fetchNotes();
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error("Error toggling pin status:", err); }
   };
 
   const handleAvatarChange = async (e) => {
@@ -165,7 +169,7 @@ export function useNotesLogic() {
         setProfile(updatedProfile);
         localStorage.setItem("user", JSON.stringify(updatedProfile));
       }
-    } catch (err) { alert("Lỗi khi cập nhật ảnh đại diện."); } 
+    } catch (err) { alert("Error updating avatar image."); } 
     finally {
       setUploadingAvatar(false);
       e.target.value = "";
@@ -199,10 +203,11 @@ export function useNotesLogic() {
         setActiveNote(prev => ({ ...prev, labels: data.labels }));
         fetchNotes();
       }
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error("Error toggling note label assignment:", err); }
   };
 
-  // ── Lọc danh sách ghi chú ──
+  // ── Reactive Memory Filter Stream ──
+  // Checks criteria to return subset elements filtered dynamically via query tags
   const filteredNotes = debouncedSearch.trim()
     ? notes.filter(n => {
         const q = debouncedSearch.toLowerCase();
