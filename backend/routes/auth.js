@@ -106,7 +106,8 @@ router.post('/login', async (req, res) => {
         const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
         await Token.create({ userId: user._id, token, expiresAt });
 
-        res.json({ success: true, token, user: { id: user._id, username: user.username } });
+        res.json({ success: true, token, user: { id: user._id, username: user.username, avatarUrl: user.avatarUrl || null } });
+
     } catch (err) {
         res.status(500).json({ error: 'Đăng nhập thất bại' });
     }
