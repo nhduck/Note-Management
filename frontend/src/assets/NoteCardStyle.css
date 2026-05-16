@@ -49,15 +49,14 @@
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: transparent;
+  color: var(--text-muted);
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   font-size: 14px;
   transition: background 0.2s, color 0.2s, transform 0.15s;
   flex-shrink: 0;
 }
-.pin-btn--visible { color: var(--text-muted); }
-.pin-btn--visible:hover {
+.pin-btn:hover {
   background: var(--primary-ring);
   color: var(--accent);
   transform: rotate(-20deg) scale(1.1);
@@ -141,15 +140,19 @@
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: transparent;
+  color: var(--text-muted);
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   font-size: 14px;
   transition: background 0.2s, color 0.2s, transform 0.15s;
   flex-shrink: 0;
 }
-.delete-icon-btn--visible { color: var(--text-muted); background: var(--danger-soft); }
-.delete-icon-btn--visible:hover { background: var(--danger); color: #fff; transform: scale(1.08); }
+.delete-icon-btn:hover { background: var(--danger); color: #fff; transform: scale(1.08); }
+.note-card:hover .delete-icon-btn { background: var(--danger-soft); }
+
+/* Màu riêng cho từng loại nút */
+.delete-icon-btn--danger { color: var(--danger) !important; }
+.delete-icon-btn--danger:hover { background: var(--danger) !important; color: #fff !important; }
 
 /* Search highlight */
 .search-highlight {
