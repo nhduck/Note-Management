@@ -11,6 +11,7 @@ import EditorModal from "../components/EditorModal";
 import LabelManagerModal from "../components/LabelManagerModal";
 import DeleteConfirmModal from "../components/DeleteConfirmModal";
 import NotePasswordModal from "../components/Notepasswordmodal";
+import SecuritySettingsModal from "../components/SecuritySettingsModal";
 
 function HomePage() {
   // Chỉ giữ lại các State dành riêng cho UI Layout ở mức Top-Level
@@ -20,19 +21,25 @@ function HomePage() {
   const [showLabelManager, setShowLabelManager] = useState(false);
   const [showLabelPicker, setShowLabelPicker] = useState(false);
   const [passwordModal, setPasswordModal] = useState(null);
+  const [showSecurityModal, setShowSecurityModal] = useState(false);
+
 
   // Kéo toàn bộ logic từ Custom Hook ra
   const {
     labels, activeLabel, setActiveLabel,
     searchTerm, setSearchTerm, debouncedSearch,
     activeNote, setActiveNote,
-    profile, saveStatus, setSaveStatus,
+    profile, saveStatus, setSaveStatus, setProfile,
     uploading, uploadingAvatar,
     fetchNotes, fetchLabels,
     handleDelete, handleImageUpload, handleRemoveImage,
     handleTogglePin, handleAvatarChange, handleLogout, handleToggleLabelOnNote,
     filteredNotes
   } = useNotesLogic();
+
+  const handleSecuritySettings = () => {
+      setShowSecurityModal(true);
+  };
 
   // Tính toán UI phái sinh
   const pinnedNotes = filteredNotes.filter(n => n.isPinned);
@@ -50,6 +57,7 @@ function HomePage() {
         viewMode={viewMode} setViewMode={setViewMode}
         profile={profile} uploadingAvatar={uploadingAvatar}
         handleAvatarChange={handleAvatarChange} handleLogout={handleLogout}
+        handleSecuritySettings={handleSecuritySettings}
       />
 
       <div className="page-layout">
@@ -59,6 +67,7 @@ function HomePage() {
           activeLabel={activeLabel}
           setActiveLabel={setActiveLabel}
           setShowLabelManager={setShowLabelManager}
+          handleSecuritySettings={handleSecuritySettings}
         />
 
         {/* ── MAIN CONTENT ── */}
@@ -141,6 +150,14 @@ function HomePage() {
             if (passwordModal.mode === "unlock") passwordModal.onUnlocked?.();
             else fetchNotes();
           }}
+        />
+      )}
+      {showSecurityModal && (
+        <SecuritySettingsModal
+        onClose={() => setShowSecurityModal(false)}
+        darkMode={darkMode}
+        profile={profile}
+        onProfileUpdate={(updatedProfile) => setProfile(updatedProfile)}
         />
       )}
     </div>
