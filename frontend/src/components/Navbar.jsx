@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ProfileMenu from "./ProfileMenu";
 
 function Navbar({
   searchTerm, setSearchTerm,
@@ -7,8 +8,14 @@ function Navbar({
   profile, uploadingAvatar,
   handleAvatarChange, handleLogout,
   onOpenPreferences,
+  handleSecuritySettings,
 }) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+
+  const onSecurityClick = () => {
+    setShowProfileMenu(false);
+    handleSecuritySettings();
+  };
 
   return (
     <nav className="navbar">
@@ -34,6 +41,7 @@ function Navbar({
         <button className="icon-btn" onClick={() => setDarkMode(!darkMode)} title="Đổi giao diện">
           <i className={`bi ${darkMode ? "bi-sun-fill" : "bi-moon-stars-fill"}`} />
         </button>
+
         <div className="view-toggle">
           <button className={`view-btn ${viewMode === "grid" ? "active" : ""}`} onClick={() => setViewMode("grid")} title="Lưới">
             <i className="bi bi-grid" />
@@ -51,27 +59,16 @@ function Navbar({
           </div>
 
           {showProfileMenu && (
-            <>
-              <div className="profile-overlay" onClick={() => setShowProfileMenu(false)} />
-              <div className={`profile-popup ${darkMode ? "profile-popup--dark" : ""}`}>
-                <div className="profile-popup-name">{profile?.username || "Người dùng"}</div>
-
-                <label className="profile-popup-item">
-                  {uploadingAvatar
-                    ? <><i className="bi bi-arrow-repeat spin" /> Đang tải...</>
-                    : <><i className="bi bi-camera-fill profile-icon-purple" /> Đổi ảnh đại diện</>}
-                  <input type="file" accept="image/*" hidden onChange={handleAvatarChange} disabled={uploadingAvatar} />
-                </label>
-
-                <button className="profile-popup-item" onClick={() => { setShowProfileMenu(false); onOpenPreferences(); }}>
-                  <i className="bi bi-sliders profile-icon-purple" /> Tùy chọn hiển thị
-                </button>
-
-                <button className="profile-popup-item profile-popup-item--danger" onClick={handleLogout}>
-                  <i className="bi bi-box-arrow-right" /> Đăng xuất
-                </button>
-              </div>
-            </>
+            <ProfileMenu
+              profile={profile}
+              darkMode={darkMode}
+              uploadingAvatar={uploadingAvatar}
+              onClose={() => setShowProfileMenu(false)}
+              onAvatarChange={handleAvatarChange}
+              onOpenPreferences={() => { setShowProfileMenu(false); onOpenPreferences(); }}
+              onSecuritySettings={onSecurityClick}
+              onLogout={handleLogout}
+            />
           )}
         </div>
       </div>

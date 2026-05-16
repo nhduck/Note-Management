@@ -1,0 +1,125 @@
+/* LỚP PHỦ NỀN ĐEN */
+.security-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(3px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+/* KHUNG POPUP CÀI ĐẶT */
+.security-modal-content {
+  background: #fff;
+  width: 800px;
+  max-width: 95%;
+  height: 550px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+/* NÚT TẮT X */
+.security-modal-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: #666;
+  cursor: pointer;
+  z-index: 10;
+}
+
+/* CHIA 2 CỘT */
+.security-modal-layout {
+  display: flex;
+  height: 100%;
+}
+
+.security-modal-sidebar {
+  width: 250px;
+  background: #f8f9fa;
+  border-right: 1px solid #eee;
+  padding: 20px 0;
+}
+
+.security-modal-title {
+  padding: 0 20px;
+  margin-bottom: 20px;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.security-tabs {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.security-tabs li {
+  padding: 12px 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #555;
+  transition: all 0.2s;
+}
+
+.security-tabs li:hover {
+  background: #ebebeb;
+}
+
+.security-tabs li.active {
+  background: #e0d4f5; /* Màu nền tím nhạt cho tab đang chọn */
+  color: var(--primary-color, #6f42c1);
+  border-right: 3px solid var(--primary-color, #6f42c1);
+  font-weight: bold;
+}
+
+.security-tabs li.tab-danger {
+  color: #dc3545;
+}
+.security-tabs li.tab-danger.active {
+  background: #ffe5e5;
+  border-right: 3px solid #dc3545;
+}
+
+.security-modal-body {
+  flex: 1;
+  padding: 30px 40px;
+  overflow-y: auto;
+}
+
+/* CÁC THÀNH PHẦN BÊN TRONG (Form, Nút, List) */
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 0.9rem; }
+.form-control { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; }
+
+.btn-save { background: var(--primary-color, #6f42c1); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
+.btn-delete-account { background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+
+.alert-danger { background: #ffe5e5; color: #b02a37; padding: 15px; border-radius: 6px; border: 1px solid #f5c2c7; }
+
+.device-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #eee; }
+.device-info { display: flex; align-items: center; gap: 15px; }
+.device-icon { font-size: 1.5rem; color: #555; }
+.device-meta { font-size: 0.8rem; color: #888; }
+.btn-logout-device { background: none; border: 1px solid #ccc; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
+
+/* DARK MODE CHO MODAL (NẾU CÓ DÙNG) */
+.security-modal-content--dark { background: #222; color: #eee; }
+.security-modal-content--dark .security-modal-sidebar { background: #1a1a1a; border-right-color: #333; }
+.security-modal-content--dark .security-tabs li { color: #ccc; }
+.security-modal-content--dark .security-tabs li:hover { background: #333; }
+.security-modal-content--dark .security-tabs li.active { background: #3a2a5a; color: #b388ff; }
+.security-modal-content--dark .form-control { background: #333; border-color: #444; color: white; }
+.security-modal-content--dark .device-item { border-bottom-color: #333; }

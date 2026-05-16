@@ -214,7 +214,7 @@ export function useNotesLogic() {
     notes, labels, activeLabel, setActiveLabel,
     searchTerm, setSearchTerm, debouncedSearch,
     activeNote, setActiveNote,
-    profile, saveStatus, setSaveStatus,
+    profile, saveStatus, setSaveStatus, setProfile,
     uploading, uploadingAvatar,
     fetchNotes, fetchLabels,
     handleDelete, handleImageUpload, handleRemoveImage,
