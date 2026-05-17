@@ -176,8 +176,8 @@ labels, and shared content for evaluation purposes.
 
   ┌─────────────────────────────────────────────────────────┐
   │  Account 2 (Sharing recipient account)                  │
-  │  Email:    [second test email here]                     │
-  │  Password: Test@1234                                    │
+  │  Email:    ldat21072006@gmail.com                       │
+  │  Password: 123456l@                                     │
   │  Contains: notes shared from Account 1 (view + edit)    │
   └─────────────────────────────────────────────────────────┘
 
