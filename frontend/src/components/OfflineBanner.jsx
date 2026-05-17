@@ -10,19 +10,27 @@ export default function OfflineBanner() {
     window.addEventListener("online",  goOnline);
     window.addEventListener("offline", goOffline);
 
-    // Cleanup when component unmounts
     return () => {
       window.removeEventListener("online",  goOnline);
       window.removeEventListener("offline", goOffline);
     };
   }, []);
 
-  // Online → render nothing
   if (online) return null;
 
   return (
-    <div>
-      You are offline — notes will sync automatically once connection is restored
+    <div style={{
+      background: "#f59e0b",
+      color: "#451a03",
+      textAlign: "center",
+      padding: "8px 16px",
+      fontSize: "13px",
+      fontWeight: "500",
+      letterSpacing: "0.01em",
+      zIndex: 9999,
+      position: "relative",
+    }}>
+      ⚠️ You are offline — notes are saved and will auto-sync when the connection is restored.
     </div>
   );
 }

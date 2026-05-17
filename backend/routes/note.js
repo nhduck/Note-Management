@@ -71,18 +71,28 @@ router.post('/save', async (req, res) => {
             note = await Note.findByIdAndUpdate(noteId, updateData, { new: true })
                              .populate('labels', 'name');
 
-            // ── Real-time broadcast to all viewers of this note ──
-            // Emit to everyone in the room EXCEPT the sender
-            io.to(`note:${noteId}`).emit('note-updated', {
+            // ── Real-time broadcast ──
+            const updatePayload = {
                 noteId,
-                title:   note.title,
-                content: note.content,
-                images:  note.images,
-                labels:  note.labels,
-                color:   note.color,
+                title:     note.title,
+                content:   note.content,
+                images:    note.images,
+                labels:    note.labels,
+                color:     note.color,
                 updatedAt: note.updatedAt,
                 updatedBy: userId,
-            });
+            };
+
+            // 1. Emit to the note room (users with the editor open)
+            io.to(`note:${noteId}`).emit('note-updated', updatePayload);
+
+            // 2. Emit to each collaborator's personal user room so their
+            //    note list on the home page refreshes without a page reload.
+            const ownerId = note.userId.toString();
+            io.to(`user:${ownerId}`).emit('note-updated', updatePayload);
+            for (const s of note.sharedWith || []) {
+                io.to(`user:${s.userId.toString()}`).emit('note-updated', updatePayload);
+            }
         } else {
             // Create new note — userId is the creator
             const data = {
@@ -94,6 +104,13 @@ router.post('/save', async (req, res) => {
                 ...(color !== undefined && { color }),
             };
             note = await Note.create(data);
+
+            // ── Real-time broadcast: notify the owner's home page ──
+            // The owner's note list must refresh so the new card appears instantly
+            io.to(`user:${userId}`).emit('note-created', {
+                noteId: note._id.toString(),
+                note,
+            });
         }
 
         res.json({ success: true, note });
@@ -105,7 +122,22 @@ router.post('/save', async (req, res) => {
 // Delete a note document
 router.delete('/:id', async (req, res) => {
     try {
-        await Note.findByIdAndDelete(req.params.id);
+        const io = req.app.get('io');
+        const noteId = req.params.id;
+
+        // Fetch note before deletion so we know who to notify
+        const note = await Note.findById(noteId);
+        if (note) {
+            const deletePayload = { noteId };
+            // Notify the owner
+            io.to(`user:${note.userId.toString()}`).emit('note-deleted', deletePayload);
+            // Notify every collaborator so their "Shared with me" list updates
+            for (const s of note.sharedWith || []) {
+                io.to(`user:${s.userId.toString()}`).emit('note-deleted', deletePayload);
+            }
+        }
+
+        await Note.findByIdAndDelete(noteId);
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: 'Failed to delete note' });
@@ -208,6 +240,15 @@ router.patch('/:id/share', async (req, res) => {
         }
 
         await note.save();
+
+        // ── Real-time broadcast ──
+        // Notify the newly added collaborator so their "Shared with me" appears instantly
+        const io = req.app.get('io');
+        const sharePayload = { noteId: note._id.toString() };
+        io.to(`user:${targetUser._id.toString()}`).emit('note-shared', sharePayload);
+        // Refresh the owner's list too (permission badge update)
+        io.to(`user:${requesterId}`).emit('note-shared', sharePayload);
+
         res.json({ success: true, sharedWith: note.sharedWith });
     } catch (err) {
         res.status(500).json({ error: 'Failed to share note' });
@@ -243,10 +284,20 @@ router.delete('/:id/share/:targetUserId', async (req, res) => {
             return res.status(403).json({ error: 'Only the owner can revoke access' });
         }
 
+        const removedUserId = req.params.targetUserId;
         note.sharedWith = note.sharedWith.filter(
-            s => s.userId.toString() !== req.params.targetUserId
+            s => s.userId.toString() !== removedUserId
         );
         await note.save();
+
+        // ── Real-time broadcast ──
+        const io = req.app.get('io');
+        const revokePayload = { noteId: note._id.toString() };
+        // Tell the removed user their shared note is gone
+        io.to(`user:${removedUserId}`).emit('note-unshared', revokePayload);
+        // Refresh owner's list
+        io.to(`user:${requesterId}`).emit('note-unshared', revokePayload);
+
         res.json({ success: true, sharedWith: note.sharedWith });
     } catch (err) {
         res.status(500).json({ error: 'Failed to revoke access' });
@@ -262,8 +313,18 @@ router.delete('/:id/share', async (req, res) => {
             return res.status(403).json({ error: 'Only the owner can revoke all access' });
         }
 
+        const removedUsers = [...note.sharedWith];
         note.sharedWith = [];
         await note.save();
+
+        // ── Real-time broadcast ──
+        const io = req.app.get('io');
+        const revokeAllPayload = { noteId: note._id.toString() };
+        // Notify every former collaborator
+        for (const s of removedUsers) {
+            io.to(`user:${s.userId.toString()}`).emit('note-unshared', revokeAllPayload);
+        }
+
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: 'Failed to revoke all shares' });
