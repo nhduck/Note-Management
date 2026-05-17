@@ -1,6 +1,7 @@
-# NOTESPACE
-TABLE OF CONTENTS
------------------
+# NOTESPACE — PROJECT README
+Note Management Web Application
+
+## TABLE OF CONTENTS
   1. Project Overview
   2. Technology Stack
   3. Features Implemented
@@ -11,18 +12,14 @@ TABLE OF CONTENTS
   8. Notes for Evaluators
   9. Known Limitations
 
-================================================================================
-1. PROJECT OVERVIEW
-================================================================================
+## 1. PROJECT OVERVIEW
 
 NoteSpace is a full-stack note management web application built with React
 (frontend) and Node.js/Express (backend), using MongoDB Atlas as the database.
 It supports note creation, labeling, sharing, password protection, real-time
 collaboration, and offline capability via a Progressive Web App (PWA) approach.
 
-================================================================================
-2. TECHNOLOGY STACK
-================================================================================
+## 2. TECHNOLOGY STACK
 
   Frontend:
     - React 19 + React Router v7
@@ -44,9 +41,7 @@ collaboration, and offline capability via a Progressive Web App (PWA) approach.
     - Docker + Docker Compose (containerized deployment)
     - Nginx (frontend static server + reverse proxy)
 
-================================================================================
-3. FEATURES IMPLEMENTED
-================================================================================
+## 3. FEATURES IMPLEMENTED
 
   --- 2.1 Account Management ---
   [x] Login required to access the app; redirects unauthenticated users
@@ -101,9 +96,7 @@ collaboration, and offline capability via a Progressive Web App (PWA) approach.
   [x] Responsive design with media query breakpoints for mobile, tablet, and
       desktop
 
-================================================================================
-4. RUNNING THE PROJECT — DOCKER COMPOSE (RECOMMENDED)
-================================================================================
+## 4. RUNNING THE PROJECT — DOCKER COMPOSE (RECOMMENDED)
 
 Prerequisites:
   - Docker Desktop (or Docker Engine + Docker Compose) installed and running
@@ -141,9 +134,7 @@ Notes:
     are already embedded in docker-compose.yml and backend/.env for ease of
     evaluation. No additional .env setup is required.
 
-================================================================================
-5. RUNNING THE PROJECT — MANUAL / DEVELOPMENT MODE
-================================================================================
+## 5. RUNNING THE PROJECT — MANUAL / DEVELOPMENT MODE
 
 Prerequisites:
   - Node.js >= 18
@@ -170,9 +161,7 @@ Step C — Open the application:
 
   http://localhost:5173
 
-================================================================================
-6. PRE-LOADED TEST ACCOUNTS
-================================================================================
+## 6. PRE-LOADED TEST ACCOUNTS
 
 The following accounts have been created in the database with sample notes,
 labels, and shared content for evaluation purposes.
@@ -189,7 +178,7 @@ labels, and shared content for evaluation purposes.
   │  Account 2 (Sharing recipient account)                  │
   │  Email:    [second test email here]                     │
   │  Password: Test@1234                                    │
-  │  Contains: notes shared from Account 1 (view + edit)   │
+  │  Contains: notes shared from Account 1 (view + edit)    │
   └─────────────────────────────────────────────────────────┘
 
   Note for evaluators: To test real-time collaboration, log into Account 1
@@ -200,9 +189,7 @@ labels, and shared content for evaluation purposes.
   email address during registration. Emails are sent from:
     pokemongo99113@gmail.com  via Gmail SMTP.
 
-================================================================================
-7. OPTIONAL / EXTRA-POINT FEATURES
-================================================================================
+## 7. OPTIONAL / EXTRA-POINT FEATURES
 
 The following features go beyond the basic requirements and are implemented
 for additional credit:
@@ -259,9 +246,7 @@ for additional credit:
       Validation is enforced on both frontend (live checklist UI) and backend
       (server-side check before account creation).
 
-================================================================================
-8. NOTES FOR EVALUATORS
-================================================================================
+## 8. NOTES FOR EVALUATORS
 
   - Database: MongoDB Atlas (cloud-hosted). No local MongoDB installation
     needed. The connection string, credentials, and all API keys are already
@@ -286,9 +271,7 @@ for additional credit:
     offline banner. Any note edits made offline are queued and replayed once
     the connection is restored.
 
-================================================================================
-9. KNOWN LIMITATIONS
-================================================================================
+## 9. KNOWN LIMITATIONS
 
   - After registration, users are redirected to the OTP verification screen
     before accessing the app. This differs slightly from the spec's
@@ -312,6 +295,4 @@ for additional credit:
     yet implemented; recipients are notified via a real-time Socket.IO event
     if they are currently online.
 
-================================================================================
-                          END OF README
-================================================================================
+END OF README
