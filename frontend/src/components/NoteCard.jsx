@@ -79,7 +79,7 @@ function NoteCard({ note, onEdit, onDelete, onTogglePin, searchTerm, onPasswordA
       {/* MEDIA CONTAINER: Renders the first attached image thumbnail preview */}
       {note.images?.length > 0 && (
         <div className="note-thumbnail-container">
-          <img src={note.images[0]} alt="thumb" className="note-thumbnail" />
+          <img src={note.images[0]} alt="thumb" className={`note-thumbnail ${note.password ? "note-thumbnail--locked" : ""}`} />
           {note.images.length > 1 && <span className="more-images-badge">+{note.images.length - 1}</span>}
         </div>
       )}

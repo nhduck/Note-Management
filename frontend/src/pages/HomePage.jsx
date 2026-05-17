@@ -198,6 +198,7 @@ function HomePage() {
           onClose={closeEditor} onImageUpload={handleImageUpload}
           onRemoveImage={handleRemoveImage} onToggleLabelOnNote={handleToggleLabelOnNote}
           readOnly={activeNote._isShared && activeNote.permission === "view"}
+          profile={profile}
         />
       )}
       {showLabelManager && (
