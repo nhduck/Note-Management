@@ -33,6 +33,49 @@
   vertical-align: middle;
 }
 
+/* ── Password Criteria Checklist ───────────────────── */
+.password-criteria-list {
+  list-style: none;
+  margin: 8px 0 4px 0;
+  padding: 10px 14px;
+  background: rgba(79, 70, 229, 0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.password-criteria-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.password-criteria-item.failed {
+  color: var(--text-muted);
+}
+
+.password-criteria-item.passed {
+  color: var(--success);
+}
+
+.password-criteria-item i {
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.password-criteria-item.failed i {
+  color: var(--text-hint);
+}
+
+.password-criteria-item.passed i {
+  color: var(--success);
+}
+
 @media (max-width: 576px) {
   .register-card { padding: 2rem 1.5rem; margin: 1rem; }
 }

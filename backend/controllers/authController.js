@@ -14,9 +14,27 @@ const generateOtp = () =>
 // ─────────────────────────────────────────
 // POST /register – Create a new user account
 // ─────────────────────────────────────────
+// -----------------------------------------
+// Helper: Validate password strength
+// -----------------------------------------
+const validatePassword = (password) => {
+  if (!password || password.length < 8)
+    return 'Password must be at least 8 characters long.';
+  if (!/\d/.test(password))
+    return 'Password must contain at least one number.';
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"|,.<>\/?]/.test(password))
+    return 'Password must contain at least one special character.';
+  return null;
+};
+
 const register = async (req, res) => {
   try {
     const { username, password, email } = req.body;
+
+    // Validate password strength
+    const passwordError = validatePassword(password);
+    if (passwordError)
+      return res.status(400).json({ message: passwordError });
 
     // Check if the username or email is already taken
     const existing = await User.findOne({ $or: [{ username }, { email }] });

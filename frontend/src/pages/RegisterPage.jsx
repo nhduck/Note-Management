@@ -2,6 +2,13 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "../assets/RegisterStyle.css";
 
+// Password strength criteria
+const PASSWORD_CRITERIA = [
+  { id: "length",  label: "At least 8 characters",        test: (p) => p.length >= 8 },
+  { id: "number",  label: "Contains at least 1 number",   test: (p) => /\d/.test(p) },
+  { id: "special", label: "Contains a special character (!@#$%^&*...)", test: (p) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(p) },
+];
+
 // Validate registration form inputs
 const validate = ({ username, email, password, confirmPassword }) => {
   const errors = {};
@@ -11,22 +18,29 @@ const validate = ({ username, email, password, confirmPassword }) => {
   if (!email) errors.email = "Please enter your email address.";
   else if (!/\S+@\S+\.\S+/.test(email)) errors.email = "Invalid email address format.";
 
-  if (!password) errors.password = "Please enter a password.";
-  else if (password.length < 6) errors.password = "Password must be at least 6 characters long.";
+  if (!password) {
+    errors.password = "Please enter a password.";
+  } else {
+    const failedCriteria = PASSWORD_CRITERIA.filter((c) => !c.test(password));
+    if (failedCriteria.length > 0) {
+      errors.password = "Password does not meet all the criteria below.";
+    }
+  }
 
   if (!confirmPassword) errors.confirmPassword = "Please confirm your password.";
-  else if (password !== confirmPassword) errors.confirmPassword = "Confirmation password does not match.";
+  else if (password !== confirmPassword) errors.confirmPassword = "Passwords do not match.";
 
   return errors;
 };
 
 const RegisterPage = () => {
-  const [form, setForm]             = useState({ username: "", email: "", password: "", confirmPassword: "" });
-  const [errors, setErrors]         = useState({});
-  const [showPass, setShowPass]     = useState(false);
+  const [form, setForm]               = useState({ username: "", email: "", password: "", confirmPassword: "" });
+  const [errors, setErrors]           = useState({});
+  const [showPass, setShowPass]       = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [loading, setLoading]       = useState(false);
-  const [successMsg, setSuccessMsg] = useState("");
+  const [loading, setLoading]         = useState(false);
+  const [successMsg, setSuccessMsg]   = useState("");
+  const [passwordFocused, setPasswordFocused] = useState(false);
 
   const navigate = useNavigate();
 
@@ -57,7 +71,6 @@ const RegisterPage = () => {
 
       if (res.ok) {
         setSuccessMsg("Account created successfully! Redirecting...");
-        // Redirect to OTP validation screen after a 2-second delay
         setTimeout(() => {
           navigate("/verify-otp", { state: { email: form.email, type: "register" } });
         }, 2000);
@@ -70,6 +83,14 @@ const RegisterPage = () => {
       setLoading(false);
     }
   };
+
+  // Compute which criteria pass for live checklist
+  const criteriaStatus = PASSWORD_CRITERIA.map((c) => ({
+    ...c,
+    passed: c.test(form.password),
+  }));
+
+  const showCriteria = passwordFocused || form.password.length > 0;
 
   return (
     <div className="form-side">
@@ -84,7 +105,7 @@ const RegisterPage = () => {
         )}
 
         <form onSubmit={handleSubmit} noValidate>
-          {/* Username Input Field */}
+          {/* Username */}
           <div className="form-group mb-3">
             <label className="form-label" htmlFor="username">Username</label>
             <div className="input-wrap">
@@ -102,7 +123,7 @@ const RegisterPage = () => {
             )}
           </div>
 
-          {/* Email Input Field */}
+          {/* Email */}
           <div className="form-group mb-3">
             <label className="form-label" htmlFor="email">Email Address</label>
             <div className="input-wrap">
@@ -120,7 +141,7 @@ const RegisterPage = () => {
             )}
           </div>
 
-          {/* Password Input Field */}
+          {/* Password */}
           <div className="form-group mb-3">
             <label className="form-label" htmlFor="password">Password</label>
             <div className="input-wrap">
@@ -132,17 +153,32 @@ const RegisterPage = () => {
                 className={`form-input${errors.password ? " err" : ""}`}
                 value={form.password}
                 onChange={handleChange}
+                onFocus={() => setPasswordFocused(true)}
+                onBlur={() => setPasswordFocused(false)}
               />
               <button type="button" className="pass-toggle" onClick={() => setShowPass(!showPass)}>
                 <i className={`bi bi-eye${showPass ? "-slash" : ""}`} aria-hidden="true"></i>
               </button>
             </div>
+
+            {/* Password criteria checklist */}
+            {showCriteria && (
+              <ul className="password-criteria-list">
+                {criteriaStatus.map((c) => (
+                  <li key={c.id} className={`password-criteria-item ${c.passed ? "passed" : "failed"}`}>
+                    <i className={`bi ${c.passed ? "bi-check-circle-fill" : "bi-circle"}`}></i>
+                    <span>{c.label}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
             {errors.password && (
               <p className="err-msg"><i className="bi bi-exclamation-circle"></i> {errors.password}</p>
             )}
           </div>
 
-          {/* Confirm Password Input Field */}
+          {/* Confirm Password */}
           <div className="form-group mb-4">
             <label className="form-label" htmlFor="confirmPassword">Confirm Password</label>
             <div className="input-wrap">
