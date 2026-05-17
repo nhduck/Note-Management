@@ -63,7 +63,12 @@ function HomePage() {
   const unpinnedNotes = filteredNotes.filter(n => !n.isPinned);
   const pageTitle     = activeLabel ? `Label: ${activeLabel.name}` : "My Notes";
 
-  const closeEditor = () => { setActiveNote(null); setShowLabelPicker(false); };
+  const closeEditor = () => {
+    // If editing a shared note, refresh both lists
+    if (activeNote?._isShared) fetchSharedNotes();
+    setActiveNote(null);
+    setShowLabelPicker(false);
+  };
 
   // Render a NoteCard with all shared handlers
   const renderCard = (note, isShared = false) => (
@@ -72,8 +77,9 @@ function HomePage() {
       note={note}
       searchTerm={debouncedSearch}
       onEdit={() => {
-        if (isShared && note.permission === "view") return; // read-only guard
-        setSaveStatus("idle"); setActiveNote(note);
+        setSaveStatus("idle");
+        // Mark _isShared so closeEditor knows to refresh the shared list
+        setActiveNote({ ...note, _isShared: isShared });
       }}
       onDelete={isShared ? () => {} : () => setDeleteConfirm(note._id)}
       onTogglePin={isShared ? () => {} : e => handleTogglePin(e, note._id)}
@@ -171,7 +177,7 @@ function HomePage() {
           {sharedNotes.length > 0 && (
             <div className="notes-section">
               <div className="section-label section-label--shared">
-                <i className="bi bi-people-fill" /> Được chia sẻ với tôi{" "}
+                <i className="bi bi-people-fill" /> Shared with me{" "}
                 <span className="section-count">{sharedNotes.length}</span>
               </div>
               <div className={viewMode === "grid" ? "notes-grid" : "notes-list"}>
@@ -194,6 +200,8 @@ function HomePage() {
           showLabelPicker={showLabelPicker} setShowLabelPicker={setShowLabelPicker}
           onClose={closeEditor} onImageUpload={handleImageUpload}
           onRemoveImage={handleRemoveImage} onToggleLabelOnNote={handleToggleLabelOnNote}
+          readOnly={activeNote._isShared && activeNote.permission === "view"}
+          profile={profile}
         />
       )}
       {showLabelManager && (

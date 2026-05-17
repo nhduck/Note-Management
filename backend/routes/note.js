@@ -44,14 +44,58 @@ router.get('/', async (req, res) => {
 router.post('/save', async (req, res) => {
     try {
         const { noteId, title, content, images, userId, labels, color } = req.body;
-        const data = { title, content: content || '', images: images || [], userId, labels: labels || [], ...(color !== undefined && { color }) };
+        const io = req.app.get('io');
 
         let note;
         if (noteId) {
-            note = await Note.findByIdAndUpdate(noteId, data, { new: true });
+            // Fetch existing note first to verify ownership/permission
+            note = await Note.findById(noteId);
+            if (!note) return res.status(404).json({ error: 'Note not found' });
+
+            const isOwner = note.userId.toString() === userId;
+            const sharedEntry = note.sharedWith?.find(s => s.userId.toString() === userId);
+            const canEdit = isOwner || sharedEntry?.permission === 'edit';
+
+            if (!canEdit) {
+                return res.status(403).json({ error: 'No edit permission' });
+            }
+
+            // Only update content fields — never overwrite userId (ownership)
+            const updateData = {
+                title,
+                content: content || '',
+                images: images || [],
+                labels: labels || [],
+                ...(color !== undefined && { color }),
+            };
+            note = await Note.findByIdAndUpdate(noteId, updateData, { new: true })
+                             .populate('labels', 'name');
+
+            // ── Real-time broadcast to all viewers of this note ──
+            // Emit to everyone in the room EXCEPT the sender
+            io.to(`note:${noteId}`).emit('note-updated', {
+                noteId,
+                title:   note.title,
+                content: note.content,
+                images:  note.images,
+                labels:  note.labels,
+                color:   note.color,
+                updatedAt: note.updatedAt,
+                updatedBy: userId,
+            });
         } else {
+            // Create new note — userId is the creator
+            const data = {
+                title,
+                content: content || '',
+                images: images || [],
+                userId,
+                labels: labels || [],
+                ...(color !== undefined && { color }),
+            };
             note = await Note.create(data);
         }
+
         res.json({ success: true, note });
     } catch (err) {
         res.status(500).json({ error: 'Failed to save note' });
@@ -114,14 +158,12 @@ router.patch('/:id/password', async (req, res) => {
 
         if (action === 'enable') {
             note.password = await bcrypt.hash(password, 10);
-
         } else if (action === 'disable') {
             const isMatch = await bcrypt.compare(currentPassword, note.password);
             if (!isMatch) return res.status(400).json({ error: 'Incorrect current password' });
             note.password = null;
-
         } else if (action === 'change') {
-            if (!note.password) { // Safety baseline protection check
+            if (!note.password) {
                 return res.status(400).json({ error: 'Note does not have a password set' });
             }
             const isMatch = await bcrypt.compare(currentPassword, note.password);
@@ -139,7 +181,6 @@ router.patch('/:id/password', async (req, res) => {
 
 // ── SHARING ROUTES ────────────────────────────────────────
 
-// PATCH /api/notes/:id/share — Add or update a share entry
 router.patch('/:id/share', async (req, res) => {
     try {
         const { email, permission, requesterId } = req.body;
@@ -153,14 +194,12 @@ router.patch('/:id/share', async (req, res) => {
             return res.status(403).json({ error: 'Only the owner can share this note' });
         }
 
-        // Find target user by email
         const targetUser = await User.findOne({ email: email.toLowerCase().trim() });
         if (!targetUser) return res.status(404).json({ error: 'No account found with this email' });
         if (targetUser._id.toString() === requesterId) {
             return res.status(400).json({ error: 'You cannot share a note with yourself' });
         }
 
-        // Update existing entry or add new one
         const existing = note.sharedWith.find(s => s.userId.toString() === targetUser._id.toString());
         if (existing) {
             existing.permission = permission;
@@ -175,7 +214,6 @@ router.patch('/:id/share', async (req, res) => {
     }
 });
 
-// PATCH /api/notes/:id/share/permission — Change permission of existing share
 router.patch('/:id/share/permission', async (req, res) => {
     try {
         const { targetUserId, permission, requesterId } = req.body;
@@ -196,7 +234,6 @@ router.patch('/:id/share/permission', async (req, res) => {
     }
 });
 
-// DELETE /api/notes/:id/share/:targetUserId — Revoke access for one user
 router.delete('/:id/share/:targetUserId', async (req, res) => {
     try {
         const { requesterId } = req.body;
@@ -216,7 +253,6 @@ router.delete('/:id/share/:targetUserId', async (req, res) => {
     }
 });
 
-// DELETE /api/notes/:id/share — Revoke ALL shares (owner only)
 router.delete('/:id/share', async (req, res) => {
     try {
         const { requesterId } = req.body;

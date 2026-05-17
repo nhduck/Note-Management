@@ -166,3 +166,9 @@
 /* Share button variant */
 .delete-icon-btn--share { color: var(--accent); }
 .delete-icon-btn--share:hover { background: var(--primary-ring) !important; color: var(--accent) !important; }
+/* ── Locked note thumbnail blur ── */
+.note-thumbnail--locked {
+  filter: blur(6px);
+  pointer-events: none;
+  user-select: none;
+}

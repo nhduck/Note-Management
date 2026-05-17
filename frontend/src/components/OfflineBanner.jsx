@@ -30,7 +30,7 @@ export default function OfflineBanner() {
       zIndex: 9999,
       position: "relative",
     }}>
-      ⚠️ Bạn đang offline — note vẫn được lưu và sẽ tự đồng bộ khi có mạng lại
+      ⚠️ You are offline — notes are saved and will auto-sync when the connection is restored.
     </div>
   );
 }
