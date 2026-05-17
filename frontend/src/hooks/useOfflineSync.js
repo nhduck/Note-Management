@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { getQueue, removeFromQueue, clearQueue, setSyncing } from "../utils/offlineQueue";
 
-export function useOfflineSync(onSyncDone) {
+export function useOfflineSync(onSyncDone, onSyncItem) {
   useEffect(() => {
 
     const handleOnline = async () => {
@@ -46,6 +46,14 @@ export function useOfflineSync(onSyncDone) {
               break;
             }
 
+            // Notify parent so it can update activeNote._id to the real server ID
+            try {
+              const data = await res.json();
+              if (data?.note) {
+                onSyncItem?.({ tempId: action.tempId, note: data.note });
+              }
+            } catch { /* non-critical — ignore parse errors */ }
+
             removeFromQueue(action.tempId);
           } catch (err) {
             console.error("[offlineSync] network error:", err);
@@ -68,5 +76,5 @@ export function useOfflineSync(onSyncDone) {
     window.addEventListener("online", handleOnline);
     return () => window.removeEventListener("online", handleOnline);
 
-  }, [onSyncDone]);
+  }, [onSyncDone, onSyncItem]);
 }

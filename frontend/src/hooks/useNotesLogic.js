@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { upsertQueue, isInQueue, isOnline, isSyncing } from "../utils/offlineQueue";
 import { useOfflineSync } from "./useOfflineSync";
 import { getSocket, joinUserRoom } from "./useSocket";
@@ -31,8 +31,22 @@ export function useNotesLogic() {
 
   const { fetchNotes, fetchLabels } = useNotesAPI(profile, setNotes, setLabels, activeLabel);
 
+  // Called by useOfflineSync after each note is successfully synced.
+  const handleSyncItem = useCallback(({ tempId, note }) => {
+    if (offlineTempIdRef.current === tempId) {
+      offlineTempIdRef.current = null;
+      if (note?._id) {
+        setActiveNote((prev) => (prev ? { ...prev, _id: note._id } : prev));
+        // Also replace the temp note in the list with the real one
+        setNotes((prev) =>
+          prev.map((n) => (n._id === `temp_${tempId}` ? { ...n, _id: note._id } : n))
+        );
+      }
+    }
+  }, []);
+
   // useOfflineSync handles the sync and calls fetchNotes once when done
-  useOfflineSync(fetchNotes);
+  useOfflineSync(fetchNotes, handleSyncItem);
 
   useEffect(() => { fetchNotes();  }, [fetchNotes]);
   useEffect(() => { fetchLabels(); }, [fetchLabels]);
@@ -158,8 +172,12 @@ export function useNotesLogic() {
     return () => clearTimeout(timer);
   }, [activeNote, fetchNotes, setNotes]);
 
-  // Reset tempId tracking when user switches to a different note
+  // Reset tempId tracking when user switches to a different note.
+  // IMPORTANT: Do NOT reset when _id is set to a "temp_" value — that means
+  // we just assigned it ourselves (offline optimistic update), NOT a note switch.
+  // Clearing the ref in that case causes autosave to enqueue the same note twice → duplicate.
   useEffect(() => {
+    if (activeNote?._id?.startsWith("temp_")) return;
     offlineTempIdRef.current = null;
   }, [activeNote?._id]);
 
