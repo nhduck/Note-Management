@@ -60,7 +60,7 @@ const updateProfile = async (req, res) => {
     res.json({
       success: true,
       message: 'Profile information updated successfully!',
-      user: { id: updatedUser._id, username: updatedUser.username },
+      user: { id: updatedUser._id, username: updatedUser.username, email: updatedUser.email },
     });
   } catch (err) {
     res.status(500).json({ error: 'Failed to update profile information.' });
