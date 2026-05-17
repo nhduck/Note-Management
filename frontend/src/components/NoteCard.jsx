@@ -23,7 +23,7 @@ function HighlightText({ text, searchTerm }) {
   );
 }
 
-function NoteCard({ note, onEdit, onDelete, onTogglePin, searchTerm, onPasswordAction }) {
+function NoteCard({ note, onEdit, onDelete, onTogglePin, searchTerm, onPasswordAction, onShare, isShared, sharedPermission }) {
 
   // Intercept card click: Request password unlock first if the note is password protected
   const handleEditClick = () => {
@@ -56,7 +56,15 @@ function NoteCard({ note, onEdit, onDelete, onTogglePin, searchTerm, onPasswordA
       onClick={handleEditClick}
       style={{ "--note-color": note.color || "var(--accent)" }}
     >
-      {/* CARD TOP BADGES & ACTIONS: Pin triggers and metadata state indicators */}
+      {/* SHARED BADGE: Show when this note is shared with me */}
+      {isShared && (
+        <div className="note-shared-badge">
+          <i className={`bi ${sharedPermission === "edit" ? "bi-pencil-fill" : "bi-eye-fill"}`} />
+          {sharedPermission === "edit" ? "Edit" : "View only"}
+        </div>
+      )}
+
+      {/* CARD TOP BADGES & ACTIONS */}
       <div className="note-header-icons">
         <button
           className={`pin-btn ${note.isPinned ? "pin-btn--active" : ""}`}
@@ -110,9 +118,10 @@ function NoteCard({ note, onEdit, onDelete, onTogglePin, searchTerm, onPasswordA
         
         <div className="note-footer-actions" style={{ display: "flex", gap: "6px", alignItems: "center" }}>
           
-          {/* PASSWORD WORKFLOW ACTIONS: Displays control buttons dynamically by active state */}
+          {/* PASSWORD & SHARE ACTIONS: Only for note owner */}
+          {!isShared && (<>
+          {/* PASSWORD WORKFLOW ACTIONS */}
           {!note.password ? (
-            // Option to protect an open note
             <button
               className="delete-icon-btn"
               onClick={e => { e.stopPropagation(); onPasswordAction("enable", note._id); }}
@@ -121,7 +130,6 @@ function NoteCard({ note, onEdit, onDelete, onTogglePin, searchTerm, onPasswordA
               <i className="bi bi-shield-lock" />
             </button>
           ) : (
-            // Options available for already encrypted entries
             <>
               <button
                 className="delete-icon-btn"
@@ -140,7 +148,16 @@ function NoteCard({ note, onEdit, onDelete, onTogglePin, searchTerm, onPasswordA
             </>
           )}
 
-          {/* DANGER ACTION: Delete entire note component tree record trigger */}
+          {/* SHARE ACTION */}
+          <button
+            className="delete-icon-btn delete-icon-btn--share"
+            onClick={e => { e.stopPropagation(); onShare(note); }}
+            title={note.sharedWith?.length > 0 ? `Sharing with (${note.sharedWith.length})` : "Share note"}
+          >
+            <i className={`bi ${note.sharedWith?.length > 0 ? "bi-people-fill" : "bi-share"}`} />
+          </button>
+
+          {/* DANGER ACTION */}
           <button
             className="delete-icon-btn delete-icon-btn--danger"
             onClick={handleDeleteClick}
@@ -148,6 +165,7 @@ function NoteCard({ note, onEdit, onDelete, onTogglePin, searchTerm, onPasswordA
           >
             <i className="bi bi-trash3-fill" />
           </button>
+          </>)}
         </div>
       </div>
     </div>

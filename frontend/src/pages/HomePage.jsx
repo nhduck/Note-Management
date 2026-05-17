@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import "../assets/HomeStyle.css";
 
 import { useNotesLogic } from "../hooks/useNotesLogic";
@@ -12,21 +12,23 @@ import NotePasswordModal from "../components/Notepasswordmodal";
 import UserPreferencesModal, { loadPrefs, applyPrefs } from "../components/UserPreferencesModal";
 import SecuritySettingsModal from "../components/SecuritySettingsModal";
 import OfflineBanner from "../components/OfflineBanner";
+import ShareModal from "../components/ShareModal";
+
+const getToken = () => localStorage.getItem("token") || "";
 
 function HomePage() {
-  const [viewMode, setViewMode]         = useState("grid"); // "grid" | "list"
-  const [darkMode, setDarkMode]         = useState(false);
+  const [viewMode, setViewMode]           = useState("grid");
+  const [darkMode, setDarkMode]           = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [showLabelManager, setShowLabelManager] = useState(false);
   const [showLabelPicker, setShowLabelPicker]   = useState(false);
   const [passwordModal, setPasswordModal]       = useState(null);
   const [showPreferences, setShowPreferences]   = useState(false);
   const [showSecurityModal, setShowSecurityModal] = useState(false);
+  const [shareModal, setShareModal]             = useState(null); // note object | null
+  const [sharedNotes, setSharedNotes]           = useState([]);
+  const [sidebarOpen, setSidebarOpen]           = useState(false);
 
-  // Mobile drawer sidebar responsive layout state flags
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  // Initialize application viewport styling context with stored local values on mount
   useEffect(() => { applyPrefs(loadPrefs()); }, []);
 
   const {
@@ -41,6 +43,20 @@ function HomePage() {
     filteredNotes,
   } = useNotesLogic();
 
+  // ── Fetch notes shared WITH me ──
+  const fetchSharedNotes = useCallback(async () => {
+    if (!profile) return;
+    try {
+      const res = await fetch(`/api/notes/shared?userId=${profile.id}`, {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      const data = await res.json();
+      if (res.ok) setSharedNotes(data.notes);
+    } catch { /* ignore */ }
+  }, [profile]);
+
+  useEffect(() => { fetchSharedNotes(); }, [fetchSharedNotes]);
+
   const handleSecuritySettings = () => setShowSecurityModal(true);
 
   const pinnedNotes   = filteredNotes.filter(n => n.isPinned);
@@ -48,6 +64,25 @@ function HomePage() {
   const pageTitle     = activeLabel ? `Label: ${activeLabel.name}` : "My Notes";
 
   const closeEditor = () => { setActiveNote(null); setShowLabelPicker(false); };
+
+  // Render a NoteCard with all shared handlers
+  const renderCard = (note, isShared = false) => (
+    <NoteCard
+      key={note._id}
+      note={note}
+      searchTerm={debouncedSearch}
+      onEdit={() => {
+        if (isShared && note.permission === "view") return; // read-only guard
+        setSaveStatus("idle"); setActiveNote(note);
+      }}
+      onDelete={isShared ? () => {} : () => setDeleteConfirm(note._id)}
+      onTogglePin={isShared ? () => {} : e => handleTogglePin(e, note._id)}
+      onPasswordAction={(mode, noteId, cb) => setPasswordModal({ mode, noteId, onUnlocked: cb })}
+      onShare={isShared ? null : (n) => setShareModal(n)}
+      isShared={isShared}
+      sharedPermission={isShared ? note.permission : null}
+    />
+  );
 
   return (
     <div className={`app-wrapper ${darkMode ? "dark" : ""}`}>
@@ -65,7 +100,6 @@ function HomePage() {
       />
 
       <div className="page-layout">
-        {/* ── SIDEBAR DRAWER PANEL ── */}
         <Sidebar
           labels={labels}
           activeLabel={activeLabel}
@@ -76,8 +110,8 @@ function HomePage() {
           onClose={() => setSidebarOpen(false)}
         />
 
-        {/* ── MAIN CONTENT VIEWER AREA ── */}
         <main className="main">
+          {/* ── MY NOTES header ── */}
           <div className="main-header">
             <div>
               <div className="main-title">{pageTitle}</div>
@@ -98,7 +132,6 @@ function HomePage() {
             </button>
           </div>
 
-          {/* FALLBACK STATUS VIEW: Empty search query result feedback overlay */}
           {debouncedSearch && filteredNotes.length === 0 && (
             <div className="search-empty">
               <i className="bi bi-search" />
@@ -106,7 +139,7 @@ function HomePage() {
             </div>
           )}
 
-          {/* DOCUMENT SECTION 1: PINNED NOTES GRID/LIST COMPOSITION */}
+          {/* Pinned notes */}
           {pinnedNotes.length > 0 && (
             <div className="notes-section">
               <div className="section-label">
@@ -114,19 +147,12 @@ function HomePage() {
                 <span className="section-count">{pinnedNotes.length}</span>
               </div>
               <div className={viewMode === "grid" ? "notes-grid" : "notes-list"}>
-                {pinnedNotes.map(note => (
-                  <NoteCard key={note._id} note={note} searchTerm={debouncedSearch}
-                    onEdit={() => { setSaveStatus("idle"); setActiveNote(note); }}
-                    onDelete={() => setDeleteConfirm(note._id)}
-                    onTogglePin={e => handleTogglePin(e, note._id)}
-                    onPasswordAction={(mode, noteId, cb) => setPasswordModal({ mode, noteId, onUnlocked: cb })}
-                  />
-                ))}
+                {pinnedNotes.map(n => renderCard(n))}
               </div>
             </div>
           )}
 
-          {/* DOCUMENT SECTION 2: UNPINNED REMAINING NOTES COMPOSITION */}
+          {/* Unpinned notes */}
           {unpinnedNotes.length > 0 && (
             <div className="notes-section">
               {pinnedNotes.length > 0 && (
@@ -136,21 +162,31 @@ function HomePage() {
                 </div>
               )}
               <div className={viewMode === "grid" ? "notes-grid" : "notes-list"}>
-                {unpinnedNotes.map(note => (
-                  <NoteCard key={note._id} note={note} searchTerm={debouncedSearch}
-                    onEdit={() => { setSaveStatus("idle"); setActiveNote(note); }}
-                    onDelete={() => setDeleteConfirm(note._id)}
-                    onTogglePin={e => handleTogglePin(e, note._id)}
-                    onPasswordAction={(mode, noteId, cb) => setPasswordModal({ mode, noteId, onUnlocked: cb })}
-                  />
-                ))}
+                {unpinnedNotes.map(n => renderCard(n))}
+              </div>
+            </div>
+          )}
+
+          {/* ── SHARED WITH ME section ── */}
+          {sharedNotes.length > 0 && (
+            <div className="notes-section">
+              <div className="section-label section-label--shared">
+                <i className="bi bi-people-fill" /> Được chia sẻ với tôi{" "}
+                <span className="section-count">{sharedNotes.length}</span>
+              </div>
+              <div className={viewMode === "grid" ? "notes-grid" : "notes-list"}>
+                {sharedNotes.map(note => {
+                  const myEntry = note.sharedWith?.find(s => s.userId === profile?.id || s.userId?._id === profile?.id);
+                  const perm = myEntry?.permission || "view";
+                  return renderCard({ ...note, permission: perm }, true);
+                })}
               </div>
             </div>
           )}
         </main>
       </div>
 
-      {/* ── CONDITIONAL MODAL OVERLAYS LIFECYCLE CONTROLS ── */}
+      {/* ── MODALS ── */}
       {activeNote && (
         <EditorModal
           activeNote={activeNote} setActiveNote={setActiveNote}
@@ -193,6 +229,14 @@ function HomePage() {
           darkMode={darkMode}
           profile={profile}
           onProfileUpdate={(updatedProfile) => setProfile(updatedProfile)}
+        />
+      )}
+      {shareModal && (
+        <ShareModal
+          note={shareModal}
+          profile={profile}
+          onClose={() => setShareModal(null)}
+          onChanged={() => { fetchNotes(); fetchSharedNotes(); }}
         />
       )}
     </div>

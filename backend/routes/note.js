@@ -2,7 +2,25 @@ const express = require('express');
 const mongoose = require('mongoose');
 const router = express.Router();
 const Note = require('../models/Note');
+const User = require('../models/User');
 const bcrypt = require('bcryptjs');
+
+// GET /api/notes/shared — Must be declared BEFORE /:id routes
+router.get('/shared', async (req, res) => {
+    try {
+        const { userId } = req.query;
+        if (!userId) return res.status(400).json({ error: 'Missing userId' });
+
+        const notes = await Note.find({ 'sharedWith.userId': userId })
+            .populate('labels', 'name')
+            .populate('userId', 'username avatarUrl')
+            .sort({ updatedAt: -1 });
+
+        res.json({ notes });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch shared notes' });
+    }
+});
 
 // Fetch collection list
 router.get('/', async (req, res) => {
@@ -114,8 +132,105 @@ router.patch('/:id/password', async (req, res) => {
         await note.save();
         res.json({ success: true, hasPassword: !!note.password });
     } catch (err) {
-        console.error('Password route error:', err); // Server terminal trace
+        console.error('Password route error:', err);
         res.status(500).json({ error: 'Error updating password configuration' });
+    }
+});
+
+// ── SHARING ROUTES ────────────────────────────────────────
+
+// PATCH /api/notes/:id/share — Add or update a share entry
+router.patch('/:id/share', async (req, res) => {
+    try {
+        const { email, permission, requesterId } = req.body;
+        if (!email || !permission || !requesterId) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        const note = await Note.findById(req.params.id);
+        if (!note) return res.status(404).json({ error: 'Note not found' });
+        if (note.userId.toString() !== requesterId) {
+            return res.status(403).json({ error: 'Only the owner can share this note' });
+        }
+
+        // Find target user by email
+        const targetUser = await User.findOne({ email: email.toLowerCase().trim() });
+        if (!targetUser) return res.status(404).json({ error: 'No account found with this email' });
+        if (targetUser._id.toString() === requesterId) {
+            return res.status(400).json({ error: 'You cannot share a note with yourself' });
+        }
+
+        // Update existing entry or add new one
+        const existing = note.sharedWith.find(s => s.userId.toString() === targetUser._id.toString());
+        if (existing) {
+            existing.permission = permission;
+        } else {
+            note.sharedWith.push({ userId: targetUser._id, email: targetUser.email, permission });
+        }
+
+        await note.save();
+        res.json({ success: true, sharedWith: note.sharedWith });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to share note' });
+    }
+});
+
+// PATCH /api/notes/:id/share/permission — Change permission of existing share
+router.patch('/:id/share/permission', async (req, res) => {
+    try {
+        const { targetUserId, permission, requesterId } = req.body;
+        const note = await Note.findById(req.params.id);
+        if (!note) return res.status(404).json({ error: 'Note not found' });
+        if (note.userId.toString() !== requesterId) {
+            return res.status(403).json({ error: 'Only the owner can change permissions' });
+        }
+
+        const entry = note.sharedWith.find(s => s.userId.toString() === targetUserId);
+        if (!entry) return res.status(404).json({ error: 'Share entry not found' });
+        entry.permission = permission;
+
+        await note.save();
+        res.json({ success: true, sharedWith: note.sharedWith });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to update permission' });
+    }
+});
+
+// DELETE /api/notes/:id/share/:targetUserId — Revoke access for one user
+router.delete('/:id/share/:targetUserId', async (req, res) => {
+    try {
+        const { requesterId } = req.body;
+        const note = await Note.findById(req.params.id);
+        if (!note) return res.status(404).json({ error: 'Note not found' });
+        if (note.userId.toString() !== requesterId) {
+            return res.status(403).json({ error: 'Only the owner can revoke access' });
+        }
+
+        note.sharedWith = note.sharedWith.filter(
+            s => s.userId.toString() !== req.params.targetUserId
+        );
+        await note.save();
+        res.json({ success: true, sharedWith: note.sharedWith });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to revoke access' });
+    }
+});
+
+// DELETE /api/notes/:id/share — Revoke ALL shares (owner only)
+router.delete('/:id/share', async (req, res) => {
+    try {
+        const { requesterId } = req.body;
+        const note = await Note.findById(req.params.id);
+        if (!note) return res.status(404).json({ error: 'Note not found' });
+        if (note.userId.toString() !== requesterId) {
+            return res.status(403).json({ error: 'Only the owner can revoke all access' });
+        }
+
+        note.sharedWith = [];
+        await note.save();
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to revoke all shares' });
     }
 });
 

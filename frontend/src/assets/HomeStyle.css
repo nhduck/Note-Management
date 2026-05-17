@@ -540,9 +540,9 @@
   }
 }
 
-/* ════════════════════════════════════
+/* 
    RESPONSIVE — TABLET (≤ 900px)
-════════════════════════════════════ */
+*/
 @media (max-width: 900px) {
   .sidebar { width: 180px; }
   .notes-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
@@ -550,9 +550,9 @@
   .navbar { padding: 0 16px; gap: 12px; }
 }
 
-/* ════════════════════════════════════
+/* 
    RESPONSIVE — MOBILE (≤ 640px)
-════════════════════════════════════ */
+*/
 @media (max-width: 640px) {
   /* Navbar */
   .navbar { padding: 0 12px; height: 56px; gap: 8px; }
@@ -578,13 +578,28 @@
   .profile-popup { right: 0; left: auto; min-width: 180px; }
 }
 
-/* ════════════════════════════════════
+/* 
    RESPONSIVE — SMALL MOBILE (≤ 400px)
-════════════════════════════════════ */
+*/
 @media (max-width: 400px) {
   .notes-grid { grid-template-columns: 1fr; }
   .main       { padding: 12px 10px; }
 
   /* Ẩn text logo trên màn hình rất nhỏ, chỉ giữ icon */
   .nav-logo span { display: none; }
+}
+
+/* Shared with me section label */
+.section-label--shared { color: var(--accent); }
+.section-label--shared i { color: var(--accent); }
+
+/* Shared note card overlay badge */
+.note-shared-badge {
+  position: absolute;
+  top: 8px; right: 12px;
+  font-size: 10px; font-weight: 700;
+  background: var(--primary-ring); color: var(--accent);
+  border-radius: 20px; padding: 2px 8px;
+  display: flex; align-items: center; gap: 4px;
+  pointer-events: none;
 }

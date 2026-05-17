@@ -163,3 +163,6 @@
   font-weight: 700;
 }
 .dark .search-highlight { background: rgba(255, 214, 0, 0.25); }
+/* Share button variant */
+.delete-icon-btn--share { color: var(--accent); }
+.delete-icon-btn--share:hover { background: var(--primary-ring) !important; color: var(--accent) !important; }
