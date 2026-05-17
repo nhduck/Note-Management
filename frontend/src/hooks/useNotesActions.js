@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { addToQueue, isOnline } from "../utils/offlineQueue";
+import { isOnline } from "../utils/offlineQueue";
 
 const getToken = () => localStorage.getItem("token") || "";
 const authHeaders = () => ({
