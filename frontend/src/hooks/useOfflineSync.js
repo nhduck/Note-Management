@@ -6,12 +6,14 @@ export function useOfflineSync(onSyncDone) {
 
     const handleOnline = async () => {
       const queue = getQueue();
-      if (queue.length === 0) return; // Nothing to sync
+      if (queue.length === 0) return;
 
+      // Read token directly from localStorage — independent of profile state
       const token = localStorage.getItem("token") || "";
+      if (!token) return; // skip if the user is not logged in
+
       let allOk = true;
 
-      // Send each note in the queue
       for (const action of queue) {
         try {
           const res = await fetch("/api/notes/save", {
@@ -22,20 +24,20 @@ export function useOfflineSync(onSyncDone) {
             },
             body: JSON.stringify(action.payload),
           });
-          if (!res.ok) allOk = false;
+          if (!res.ok) { allOk = false; break; }
         } catch {
           allOk = false;
-          break; // Weak network → stop and try again later
+          break;
         }
       }
 
       if (allOk) {
-        clearQueue();       // Clear the queue
-        onSyncDone?.();     // Call fetchNotes() to reload data
+        clearQueue();
+        // Wait 300ms for the server to finish processing before calling fetchNotes
+        setTimeout(() => onSyncDone?.(), 300);
       }
     };
 
-    // Register event listeners
     window.addEventListener("online", handleOnline);
     return () => window.removeEventListener("online", handleOnline);
 

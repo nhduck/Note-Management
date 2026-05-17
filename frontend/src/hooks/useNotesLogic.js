@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import { addToQueue, isOnline } from "../utils/offlineQueue";
 import { useOfflineSync } from "./useOfflineSync";
 
-
 // Helper functions to retrieve token and set headers for authenticated API configurations
 const getToken = () => localStorage.getItem("token") || "";
 const authHeaders = () => ({
@@ -69,43 +68,70 @@ export function useNotesLogic() {
   // ── Automated Note Auto-save ──
   // Listens to note mutations and batches data packages to persistent layers automatically
   useEffect(() => {
-  if (!activeNote || (!activeNote.title && !activeNote.content)) return;
-  setSaveStatus("saving");
+    if (!activeNote || (!activeNote.title && !activeNote.content)) return;
+    setSaveStatus("saving");
 
-  const t = setTimeout(async () => {
-    const payload = {
-      noteId: activeNote._id,
-      title: activeNote.title,
-      content: activeNote.content,
-      userId: profile.id,
-    };
+    const t = setTimeout(async () => {
+      const payload = {
+        noteId: activeNote._id,
+        title: activeNote.title,
+        content: activeNote.content,
+        userId: profile.id,
+      };
 
-    // Offline -> save to queue, skip fetch
-    if (!isOnline()) {
-      addToQueue({ payload });
-      setSaveStatus("saved");
-      return;
-    }
+      // Offline -> save to queue + immediately render the note on the screen
+      if (!isOnline()) {
+        addToQueue({ payload });
 
-    // Online -> send to server as normal
-    try {
-      const res = await fetch("/api/notes/save", {
-        method: "POST",
-        headers: authHeaders(),
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      setSaveStatus("saved");
-      fetchNotes();
-    } catch {
-      // Fetch failed -> also save to queue
-      addToQueue({ payload });
-      setSaveStatus("saved");
-    }
-  }, 1000);
+        // Create a mock note to display on the UI while offline
+        const tempNote = {
+          _id: payload.noteId || `offline_${Date.now()}`,
+          title: payload.title,
+          content: payload.content,
+          isPinned: false,
+          labels: [],
+          images: [],
+          color: null,
+          createdAt: new Date().toISOString(),
+          _isOffline: true, // flag indicating this is an offline note
+        };
 
-  return () => clearTimeout(t);
-}, [activeNote, fetchNotes]);
+        setNotes(prev => {
+          // If the note already exists in the list, update it; otherwise, append it to the top
+          const exists = prev.find(n => n._id === tempNote._id);
+          if (exists) {
+            return prev.map(n => n._id === tempNote._id ? { ...n, ...tempNote } : n);
+          }
+          return [tempNote, ...prev];
+        });
+
+        setSaveStatus("saved");
+        return;
+      }
+
+      // Online -> send to server as normal
+      try {
+        const res = await fetch("/api/notes/save", {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        // Assign the actual _id from the server if it's a newly created note
+        if (data.success && !payload.noteId) {
+          setActiveNote(prev => prev ? { ...prev, _id: data.note._id } : prev);
+        }
+        setSaveStatus("saved");
+        fetchNotes();
+      } catch {
+        // Fetch failed -> also save to queue
+        addToQueue({ payload });
+        setSaveStatus("saved");
+      }
+    }, 1000);
+
+    return () => clearTimeout(t);
+  }, [activeNote, fetchNotes]);
 
   // ── Event Handlers ──
   const handleDelete = async (id) => {

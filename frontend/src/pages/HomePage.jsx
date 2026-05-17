@@ -11,6 +11,7 @@ import DeleteConfirmModal from "../components/DeleteConfirmModal";
 import NotePasswordModal from "../components/Notepasswordmodal";
 import UserPreferencesModal, { loadPrefs, applyPrefs } from "../components/UserPreferencesModal";
 import SecuritySettingsModal from "../components/SecuritySettingsModal";
+import OfflineBanner from "../components/OfflineBanner";
 
 function HomePage() {
   const [viewMode, setViewMode]         = useState("grid"); // "grid" | "list"
@@ -50,6 +51,7 @@ function HomePage() {
 
   return (
     <div className={`app-wrapper ${darkMode ? "dark" : ""}`}>
+      <OfflineBanner />
       {/* ── NAVBAR NAVIGATION HEADER ── */}
       <Navbar
         searchTerm={searchTerm} setSearchTerm={setSearchTerm}
