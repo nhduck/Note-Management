@@ -24,6 +24,15 @@ app.set('io', io);
 
 io.on('connection', (socket) => {
 
+  // Client joins their personal room so they receive note updates
+  // even when the editor is not open
+  socket.on('join-user-room', ({ userId }) => {
+    if (userId) {
+      socket.join(`user:${userId}`);
+      socket._userId = userId;
+    }
+  });
+
   // Client joins a room named after the note they are viewing
   socket.on('join-note', ({ noteId, userId, username }) => {
     socket.join(`note:${noteId}`);

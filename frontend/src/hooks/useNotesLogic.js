@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { addToQueue, isOnline } from "../utils/offlineQueue";
 import { useOfflineSync } from "./useOfflineSync";
-import { getSocket } from "./useSocket";
+import { getSocket, joinUserRoom } from "./useSocket";
 
 // Read the JWT token stored on login
 const getToken = () => localStorage.getItem("token") || "";
@@ -30,6 +30,13 @@ export function useNotesLogic() {
     if (savedUser) setProfile(JSON.parse(savedUser));
     else window.location.href = "/";
   }, []);
+
+  // Join the personal user room so this socket receives note-updated events
+  // even when the editor is not open (e.g. viewing the home page note list).
+  useEffect(() => {
+    if (!profile) return;
+    joinUserRoom(profile.id);
+  }, [profile]);
 
   // Fetch the note list from the server
   const fetchNotes = useCallback(async () => {

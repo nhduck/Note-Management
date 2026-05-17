@@ -15,6 +15,17 @@ export function getSocket() {
 }
 
 /**
+ * Join the current user's personal socket room so they receive note-updated
+ * events even when the editor is not open
+ * Call this once after the user profile is loaded.
+ */
+export function joinUserRoom(userId) {
+  if (!userId) return;
+  const socket = getSocket();
+  socket.emit("join-user-room", { userId });
+}
+
+/**
  * Emit a "typing" event to all other users viewing the same note.
  * Call this inside an onChange handler with a debounce if needed.
  */

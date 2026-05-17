@@ -71,18 +71,28 @@ router.post('/save', async (req, res) => {
             note = await Note.findByIdAndUpdate(noteId, updateData, { new: true })
                              .populate('labels', 'name');
 
-            // ── Real-time broadcast to all viewers of this note ──
-            // Emit to everyone in the room EXCEPT the sender
-            io.to(`note:${noteId}`).emit('note-updated', {
+            // ── Real-time broadcast ──
+            const updatePayload = {
                 noteId,
-                title:   note.title,
-                content: note.content,
-                images:  note.images,
-                labels:  note.labels,
-                color:   note.color,
+                title:     note.title,
+                content:   note.content,
+                images:    note.images,
+                labels:    note.labels,
+                color:     note.color,
                 updatedAt: note.updatedAt,
                 updatedBy: userId,
-            });
+            };
+
+            // 1. Emit to the note room (users with the editor open)
+            io.to(`note:${noteId}`).emit('note-updated', updatePayload);
+
+            // 2. Emit to each collaborator's personal user room so their
+            //    note list on the home page refreshes without a page reload.
+            const ownerId = note.userId.toString();
+            io.to(`user:${ownerId}`).emit('note-updated', updatePayload);
+            for (const s of note.sharedWith || []) {
+                io.to(`user:${s.userId.toString()}`).emit('note-updated', updatePayload);
+            }
         } else {
             // Create new note — userId is the creator
             const data = {
