@@ -90,11 +90,21 @@ const verifyOtp = async (req, res) => {
       if (user.verificationToken !== otp)
         return res.status(400).json({ message: 'Invalid or expired verification code.' });
 
-      user.isVerified       = true;
+      user.isVerified        = true;
       user.verificationToken = undefined;
       await user.save();
 
-      return res.json({ success: true, message: 'Account verification successful!' });
+      // Auto-login: create a session token so the frontend can go straight to /home
+      const token     = crypto.randomBytes(64).toString('hex');
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      await Token.create({ userId: user._id, token, expiresAt });
+
+      return res.json({
+        success: true,
+        message: 'Account verification successful!',
+        token,
+        user: { id: user._id, username: user.username, avatarUrl: user.avatarUrl || null },
+      });
     }
   } catch (err) {
     res.status(500).json({ error: 'System error during verification processes' });

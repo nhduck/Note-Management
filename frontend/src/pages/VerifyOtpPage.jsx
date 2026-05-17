@@ -74,8 +74,10 @@ const VerifyOtpPage = () => {
           // Route over to password override views containing the active confirmation payload
           setTimeout(() => navigate("/reset-password", { state: { email, otp: code } }), 1200);
         } else {
-          // Signup workflow complete -> redirect downstream towards login portal
-          setTimeout(() => navigate("/login"), 1200);
+          // Auto-login: persist session credentials then go straight to home
+          if (data.token) localStorage.setItem("token", data.token);
+          if (data.user)  localStorage.setItem("user", JSON.stringify(data.user));
+          setTimeout(() => navigate("/home"), 1200);
         }
       } else {
         setError(data.message || "Invalid or expired verification code. Please try again.");
@@ -169,7 +171,8 @@ const VerifyOtpPage = () => {
 
           {success && (
             <p className="otp-success-msg">
-              <i className="bi bi-check-circle-fill"></i> Verification successful! Redirecting…
+              <i className="bi bi-check-circle-fill"></i>{" "}
+              {type === "reset" ? "Verification successful! Redirecting…" : "Account verified! Logging you in…"}
             </p>
           )}
 
