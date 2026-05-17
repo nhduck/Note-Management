@@ -71,6 +71,8 @@ export function applyPrefs(prefs) {
   root.style.setProperty("--shadow-btn",     `0 6px 20px rgba(${rgb}, 0.32)`);
   root.style.setProperty("--shadow-sm",      `0 2px 12px rgba(${rgb}, 0.08)`);
   root.style.setProperty("--shadow",         `0 2px 12px rgba(${rgb}, 0.08)`);
+  // Fix 2: cập nhật màu thanh bên trái của note card theo theme
+  root.style.setProperty("--note-color",     prefs.noteColor);
 }
 
 /* ═══════════════════════════════════════════════════════

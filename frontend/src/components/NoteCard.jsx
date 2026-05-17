@@ -54,7 +54,7 @@ function NoteCard({ note, onEdit, onDelete, onTogglePin, searchTerm, onPasswordA
     <div
       className={`note-card ${note.isPinned ? "note-card--pinned" : ""}`}
       onClick={handleEditClick}
-      style={{ "--note-color": note.color || "var(--accent)" }}
+      style={{}}
     >
       {/* SHARED BADGE: Show when this note is shared with me */}
       {isShared && (

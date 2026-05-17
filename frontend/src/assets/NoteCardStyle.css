@@ -9,13 +9,16 @@
   cursor: pointer;
   transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
   position: relative;
+  /* Fix 1: footer luôn ở dưới cùng dù card có ảnh hay không */
+  display: flex;
+  flex-direction: column;
 }
 .note-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
 .note-card::before {
   content: '';
   position: absolute;
   top: 0; left: 0; width: 4px; height: 100%;
-  background: var(--note-color);
+  background: var(--accent);
   border-radius: 4px 0 0 4px;
 }
 .note-card--pinned {
@@ -130,7 +133,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 12px;
+  margin-top: auto; /* Fix 1: tự đẩy xuống đáy card */
+  padding-top: 12px;
 }
 .note-date { font-size: 11px; color: var(--text-muted); }
 
