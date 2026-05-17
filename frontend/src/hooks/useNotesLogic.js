@@ -68,65 +68,39 @@ export function useNotesLogic() {
 
   // ── Automated Note Auto-save ──
   useEffect(() => {
-<<<<<<< Updated upstream
-  if (!activeNote || (!activeNote.title && !activeNote.content)) return;
-  setSaveStatus("saving");
-
-  const t = setTimeout(async () => {
-    const payload = {
-      noteId: activeNote._id,
-      title: activeNote.title,
-      content: activeNote.content,
-      userId: profile.id,
-    };
-
-    // Offline -> save to queue, skip fetch
-    if (!isOnline()) {
-      addToQueue({ payload });
-      setSaveStatus("saved");
-      return;
-    }
-
-    // Online -> send to server as normal
-    try {
-      const res = await fetch("/api/notes/save", {
-        method: "POST",
-        headers: authHeaders(),
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      setSaveStatus("saved");
-      fetchNotes();
-    } catch {
-      // Fetch failed -> also save to queue
-      addToQueue({ payload });
-      setSaveStatus("saved");
-    }
-  }, 1000);
-
-  return () => clearTimeout(t);
-}, [activeNote, fetchNotes]);
-=======
     if (!activeNote || (!activeNote.title && !activeNote.content)) return;
     setSaveStatus("saving");
+
     const t = setTimeout(async () => {
+      // Payload đầy đủ: giữ images, labels, color từ stashed changes
+      const payload = {
+        noteId: activeNote._id,
+        title: activeNote.title,
+        content: activeNote.content,
+        images: activeNote.images || [],
+        labels: (activeNote.labels || []).map(l => l._id || l),
+        userId: profile.id,
+        color: activeNote.color || null,
+      };
+
+      // Offline -> lưu vào queue, bỏ qua fetch (từ upstream)
+      if (!isOnline()) {
+        addToQueue({ payload });
+        setSaveStatus("saved");
+        return;
+      }
+
+      // Online -> gửi lên server bình thường
       try {
         const res = await fetch("/api/notes/save", {
           method: "POST",
           headers: authHeaders(),
-          body: JSON.stringify({
-            noteId: activeNote._id,
-            title: activeNote.title,
-            content: activeNote.content,
-            images: activeNote.images || [],
-            labels: (activeNote.labels || []).map(l => l._id || l),
-            userId: profile.id,
-            color: activeNote.color || null,
-          }),
+          body: JSON.stringify(payload),
         });
         const data = await res.json();
         if (data.success) {
-          if (!activeNote._id) {
+          // Cập nhật _id nếu là note mới (từ stashed changes)
+          if (!activeNote._id && data.note?._id) {
             setActiveNote(prev => ({ ...prev, _id: data.note._id }));
           }
           setSaveStatus("saved");
@@ -134,11 +108,15 @@ export function useNotesLogic() {
         } else {
           setSaveStatus("idle");
         }
-      } catch { setSaveStatus("idle"); }
+      } catch {
+        // Fetch thất bại -> cũng lưu vào queue (từ upstream)
+        addToQueue({ payload });
+        setSaveStatus("saved");
+      }
     }, 1000);
+
     return () => clearTimeout(t);
   }, [activeNote, fetchNotes]);
->>>>>>> Stashed changes
 
   // ── Event Handlers ──
   const handleDelete = async (id) => {
