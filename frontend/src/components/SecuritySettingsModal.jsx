@@ -27,7 +27,7 @@ const SecuritySettingsModal = ({ onClose, darkMode, profile, onProfileUpdate }) 
       const data = await response.json();
       if (!response.ok) throw new Error(data.message);
 
-      const updatedProfile = { ...profile, username: data.user.username };
+      const updatedProfile = { ...profile, username: data.user.username, email: data.user.email ?? profile?.email };
       localStorage.setItem("user", JSON.stringify(updatedProfile));
       onProfileUpdate?.(updatedProfile);
       alert("Profile updated successfully!");

@@ -103,7 +103,7 @@ const verifyOtp = async (req, res) => {
         success: true,
         message: 'Account verification successful!',
         token,
-        user: { id: user._id, username: user.username, avatarUrl: user.avatarUrl || null },
+        user: { id: user._id, username: user.username, email: user.email, avatarUrl: user.avatarUrl || null },
       });
     }
   } catch (err) {
@@ -161,7 +161,7 @@ const login = async (req, res) => {
     res.json({
       success: true,
       token,
-      user: { id: user._id, username: user.username, avatarUrl: user.avatarUrl || null },
+      user: { id: user._id, username: user.username, email: user.email, avatarUrl: user.avatarUrl || null },
     });
   } catch (err) {
     res.status(500).json({ error: 'Login failed' });
