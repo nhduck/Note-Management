@@ -1,4 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
+import { addToQueue, isOnline } from "../utils/offlineQueue";
+import { useOfflineSync } from "./useOfflineSync";
+
 
 // Helper functions to retrieve token and set headers for authenticated API configurations
 const getToken = () => localStorage.getItem("token") || "";
@@ -40,6 +43,8 @@ export function useNotesLogic() {
     } catch (err) { console.error("Error fetching notes:", err); }
   }, [profile, activeLabel]);
 
+  useOfflineSync(fetchNotes);
+
   const fetchLabels = useCallback(async () => {
     if (!profile) return;
     try {
@@ -64,33 +69,43 @@ export function useNotesLogic() {
   // ── Automated Note Auto-save ──
   // Listens to note mutations and batches data packages to persistent layers automatically
   useEffect(() => {
-    if (!activeNote || (!activeNote.title && !activeNote.content)) return;
-    setSaveStatus("saving");
-    const t = setTimeout(async () => {
-      try {
-        const res = await fetch("/api/notes/save", {
-          method: "POST",
-          headers: authHeaders(),
-          body: JSON.stringify({
-            noteId: activeNote._id,
-            title: activeNote.title,
-            content: activeNote.content,
-            images: activeNote.images || [],
-            labels: (activeNote.labels || []).map(l => l._id || l),
-            userId: profile.id,
-            color: activeNote.color || null,
-          }),
-        });
-        const data = await res.json();
-        if (data.success && !activeNote._id) {
-          setActiveNote(prev => ({ ...prev, _id: data.note._id }));
-        }
-        setSaveStatus("saved");
-        fetchNotes();
-      } catch { setSaveStatus("idle"); }
-    }, 1000);
-    return () => clearTimeout(t);
-  }, [activeNote, fetchNotes]);
+  if (!activeNote || (!activeNote.title && !activeNote.content)) return;
+  setSaveStatus("saving");
+
+  const t = setTimeout(async () => {
+    const payload = {
+      noteId: activeNote._id,
+      title: activeNote.title,
+      content: activeNote.content,
+      userId: profile.id,
+    };
+
+    // Offline -> save to queue, skip fetch
+    if (!isOnline()) {
+      addToQueue({ payload });
+      setSaveStatus("saved");
+      return;
+    }
+
+    // Online -> send to server as normal
+    try {
+      const res = await fetch("/api/notes/save", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      setSaveStatus("saved");
+      fetchNotes();
+    } catch {
+      // Fetch failed -> also save to queue
+      addToQueue({ payload });
+      setSaveStatus("saved");
+    }
+  }, 1000);
+
+  return () => clearTimeout(t);
+}, [activeNote, fetchNotes]);
 
   // ── Event Handlers ──
   const handleDelete = async (id) => {
