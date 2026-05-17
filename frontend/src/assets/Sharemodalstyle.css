@@ -167,5 +167,4 @@
 .share-done-btn:hover { border-color: var(--accent); background: var(--primary-ring); }
 
 /* Spin animation for loading state */
-@keyframes spin { to { transform: rotate(360deg); } }
 .spin { display: inline-block; animation: spin 0.7s linear infinite; }

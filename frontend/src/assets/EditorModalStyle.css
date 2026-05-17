@@ -1,18 +1,4 @@
 /* ════════════════════════════════════
-   MODAL OVERLAY (shared)
-════════════════════════════════════ */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 300;
-  backdrop-filter: blur(2px);
-}
-
-/* ════════════════════════════════════
    EDITOR MODAL
 ════════════════════════════════════ */
 .editor-modal {
@@ -23,16 +9,10 @@
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 24px 64px rgba(0,0,0,0.18), 0 0 0 1px var(--border);
-  animation: modal-pop 0.22s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: var(--shadow-card), 0 0 0 1px var(--border);
   overflow: hidden;
 }
-@keyframes modal-pop {
-  from { opacity: 0; transform: scale(0.93) translateY(12px); }
-  to   { opacity: 1; transform: scale(1)   translateY(0); }
-}
 
-/* Header */
 .editor-header {
   display: flex;
   align-items: center;
@@ -61,11 +41,9 @@
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   font-size: 13px;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 .editor-close-btn:hover { background: var(--danger-soft); color: var(--danger); border-color: var(--danger); }
 
-/* Body */
 .editor-body {
   padding: 20px 24px;
   flex: 1;
@@ -93,7 +71,6 @@
   font-size: 15px;
   font-weight: 600;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
   width: 100%;
 }
 .editor-title:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--primary-ring); }
@@ -111,14 +88,11 @@
   outline: none;
   resize: none;
   font-family: inherit;
-  transition: border-color 0.2s, box-shadow 0.2s;
   width: 100%;
 }
 .editor-content:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--primary-ring); }
 
-/* ── Typing Indicator ─────────────────────────────── */
-
-/* Container for the "X is typing..." row */
+/* ── Typing Indicator ───────────────────────────────── */
 .editor-typing-indicator {
   display: flex;
   align-items: center;
@@ -127,32 +101,10 @@
   color: var(--text-muted);
   font-style: italic;
   padding: 2px 4px;
-  animation: fadeIn 0.2s ease;
 }
 
-/* Three animated dots rendered via a pseudo-element */
-.typing-dots::before {
-  content: '...';
-  display: inline-block;
-  font-style: normal;
-  font-weight: 700;
-  letter-spacing: 2px;
-  animation: typing-blink 1.2s steps(1) infinite;
-}
-
-@keyframes typing-blink {
-  0%   { content: '.  '; }
-  33%  { content: '.. '; }
-  66%  { content: '...'; }
-  100% { content: '.  '; }
-}
-
-/* Attached labels */
-.editor-labels-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
+/* ── Labels ─────────────────────────────────────────── */
+.editor-labels-row { display: flex; flex-wrap: wrap; gap: 6px; }
 .editor-label-chip {
   display: inline-flex;
   align-items: center;
@@ -174,17 +126,11 @@
   line-height: 1;
   padding: 0 2px;
   opacity: 0.7;
-  transition: opacity 0.2s;
 }
 .chip-remove-btn:hover { opacity: 1; }
 
-/* Image attachments */
-.editor-images {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding-top: 10px;
-}
+/* ── Images ─────────────────────────────────────────── */
+.editor-images { display: flex; flex-wrap: wrap; gap: 12px; padding-top: 10px; }
 .image-preview-wrapper {
   position: relative;
   width: 80px; height: 80px;
@@ -207,7 +153,7 @@
 }
 .remove-img-btn:hover { background: var(--danger); }
 
-/* Footer */
+/* ── Footer ─────────────────────────────────────────── */
 .editor-footer {
   display: flex;
   align-items: center;
@@ -226,16 +172,11 @@
   flex-shrink: 0;
 }
 .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-.status-dot--saving { background: #f59e0b; animation: pulse-dot 0.8s infinite; }
-@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+.status-dot--saving { background: #f59e0b; }
 .status-icon--saved { color: var(--success); font-size: 14px; }
 .status-icon--idle  { color: var(--text-hint); font-size: 14px; }
 
-.editor-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+.editor-actions { display: flex; align-items: center; gap: 8px; }
 .footer-icon-btn {
   width: 36px; height: 36px;
   border: 1.5px solid var(--border);
@@ -245,7 +186,6 @@
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   font-size: 16px;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
 }
 .footer-icon-btn:hover { background: var(--primary-ring); color: var(--accent); border-color: var(--accent); }
 
@@ -257,7 +197,6 @@
   padding: 7px 13px;
   border-radius: 10px;
   border: 1.5px solid var(--border);
-  transition: all 0.2s;
   white-space: nowrap;
 }
 .upload-btn:hover { background: var(--bg-page); color: var(--text-dark); }
@@ -271,15 +210,11 @@
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
-  transition: opacity 0.15s, transform 0.15s;
-  box-shadow: var(--shadow-btn);
   white-space: nowrap;
 }
-.editor-done-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+.editor-done-btn:hover { opacity: 0.88; }
 
-/* ── Real-time Sync Styles ─────────────────────────────── */
-
-/* Small badge in the header showing the note is being edited by someone else */
+/* ── Real-time Sync ──────────────────────────────────── */
 .editor-realtime-badge {
   display: flex;
   align-items: center;
@@ -291,25 +226,15 @@
   border-radius: 20px;
   padding: 3px 10px;
   margin-right: 8px;
-  animation: fadeIn 0.3s ease;
 }
 
-/* Pulsing green dot inside the badge */
 .realtime-dot {
-  width: 8px;
-  height: 8px;
+  width: 8px; height: 8px;
   border-radius: 50%;
   background: #16a34a;
-  animation: pulse-green 1.2s infinite;
   flex-shrink: 0;
 }
 
-@keyframes pulse-green {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.5; transform: scale(1.4); }
-}
-
-/* Banner shown inside the body when a remote save just arrived */
 .editor-realtime-banner {
   display: flex;
   align-items: center;
@@ -322,17 +247,6 @@
   font-size: 12px;
   font-weight: 500;
   margin-bottom: 10px;
-  animation: slideDown 0.3s ease;
-}
-
-@keyframes slideDown {
-  from { opacity: 0; transform: translateY(-6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
 }
 
 /* ── Responsive ─────────────────────────────────────── */

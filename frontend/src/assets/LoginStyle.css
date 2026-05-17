@@ -1,21 +1,5 @@
 @import "./RootStyle.css";
 
-body {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 800px; 
-}
-
-/* Layout */
-.form-side {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 24px;
-  min-height: 800px;
-}
-
 .login-card {
   background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(24px);
@@ -27,135 +11,9 @@ body {
   animation: cardReveal 0.55s ease-out;
 }
 
-@keyframes cardReveal {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.card-title {
-  font-size: 26px;
-  font-weight: 800;
-  letter-spacing: -1px;
-  margin-bottom: 8px;
-}
-
-/* Form Elements */
-.form-label {
-  display: block;
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 6px;
-}
-
-.input-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.i-icon {
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  
-  color: var(--text-hint);
-  font-size: 18px;
-  pointer-events: none;
-  transition: color 0.2s;
-  margin-right: 0px;
-  z-index: 2;
-}
-
-.form-input {
-  width: 100%;
-  padding: 10px 10px 10px 44px !important;
-  border: 1.5px solid var(--border);
-  border-radius: 8px;
-  font-size: 14px;
-  transition: all 0.2s;
-  outline: none;
-  background: var(--bg-surface);
-  color: var(--text);
-  box-sizing: border-box;
-}
-
-.form-input:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-ring);
-}
-
-.form-input.err {
-  border-color: var(--danger);
-  background-color: var(--danger-soft);
-}
-
-.input-wrap:focus-within .i-icon {
-  color: var(--primary);
-}
-
-.pass-toggle {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: var(--text-hint);
-  cursor: pointer;
-  padding: 5px;
-  font-size: 16px;
-}
-
-.err-msg {
-  font-size: 12px;
-  color: var(--danger);
-  margin-top: 6px;
-  font-weight: 500;
-}
-
-/* Button */
-.btn-submit {
-  width: 100%;
-  background: var(--primary);
-  border-radius: 8px;
-  color: white;
-  font-weight: 700;
-  cursor: pointer;
-  font-size: 15px;
-}
-
-.btn-submit:hover:not(:disabled) {
-  background: var(--primary-h);
-  box-shadow: var(--shadow-btn);
-  transform: translateY(-1px);
-}
-
-.btn-submit:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Responsive */
 @media (max-width: 576px) {
-  .login-card {
-    padding: 32px 24px;
-    margin: 16px;
-  }
+  .login-card { padding: 32px 24px; margin: 16px; }
 }
-/* ── Responsive bổ sung ─────────────────────────────── */
 @media (max-width: 480px) {
-  .form-side {
-    padding: 24px 16px;
-    min-height: 100svh; /* safe-area aware height */
-    align-items: flex-start;
-    padding-top: 40px;
-  }
-  .login-card {
-    padding: 28px 20px;
-    border-radius: 14px;
-    max-width: 100%;
-  }
-  .card-title { font-size: 22px; }
-  .btn-submit { padding: 12px; font-size: 14px; }
+  .login-card { padding: 28px 20px; border-radius: 14px; max-width: 100%; }
 }
