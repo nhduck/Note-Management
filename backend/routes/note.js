@@ -44,14 +44,36 @@ router.get('/', async (req, res) => {
 router.post('/save', async (req, res) => {
     try {
         const { noteId, title, content, images, userId, labels, color } = req.body;
-        const data = { title, content: content || '', images: images || [], userId, labels: labels || [], ...(color !== undefined && { color }) };
 
         let note;
         if (noteId) {
-            note = await Note.findByIdAndUpdate(noteId, data, { new: true });
+            // Fetch existing note first to verify ownership/permission
+            note = await Note.findById(noteId);
+            if (!note) return res.status(404).json({ error: 'Note not found' });
+
+            const isOwner = note.userId.toString() === userId;
+            const sharedEntry = note.sharedWith?.find(s => s.userId.toString() === userId);
+            const canEdit = isOwner || sharedEntry?.permission === 'edit';
+
+            if (!canEdit) {
+                return res.status(403).json({ error: 'No edit permission' });
+            }
+
+            // Only update content fields — never overwrite userId (ownership)
+            const updateData = {
+                title,
+                content: content || '',
+                images: images || [],
+                labels: labels || [],
+                ...(color !== undefined && { color }),
+            };
+            note = await Note.findByIdAndUpdate(noteId, updateData, { new: true });
         } else {
+            // Create new note — userId is the creator
+            const data = { title, content: content || '', images: images || [], userId, labels: labels || [], ...(color !== undefined && { color }) };
             note = await Note.create(data);
         }
+
         res.json({ success: true, note });
     } catch (err) {
         res.status(500).json({ error: 'Failed to save note' });

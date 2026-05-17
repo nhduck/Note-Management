@@ -67,8 +67,8 @@ export function useNotesLogic() {
   }, [searchTerm]);
 
   // ── Automated Note Auto-save ──
-  // Listens to note mutations and batches data packages to persistent layers automatically
   useEffect(() => {
+<<<<<<< Updated upstream
   if (!activeNote || (!activeNote.title && !activeNote.content)) return;
   setSaveStatus("saving");
 
@@ -106,6 +106,39 @@ export function useNotesLogic() {
 
   return () => clearTimeout(t);
 }, [activeNote, fetchNotes]);
+=======
+    if (!activeNote || (!activeNote.title && !activeNote.content)) return;
+    setSaveStatus("saving");
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/notes/save", {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify({
+            noteId: activeNote._id,
+            title: activeNote.title,
+            content: activeNote.content,
+            images: activeNote.images || [],
+            labels: (activeNote.labels || []).map(l => l._id || l),
+            userId: profile.id,
+            color: activeNote.color || null,
+          }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (!activeNote._id) {
+            setActiveNote(prev => ({ ...prev, _id: data.note._id }));
+          }
+          setSaveStatus("saved");
+          fetchNotes();
+        } else {
+          setSaveStatus("idle");
+        }
+      } catch { setSaveStatus("idle"); }
+    }, 1000);
+    return () => clearTimeout(t);
+  }, [activeNote, fetchNotes]);
+>>>>>>> Stashed changes
 
   // ── Event Handlers ──
   const handleDelete = async (id) => {

@@ -14,6 +14,7 @@ function EditorModal({
   onImageUpload,
   onRemoveImage,
   onToggleLabelOnNote,
+  readOnly = false,
 }) {
   return (
     // Backdrop overlay: clicks here close the modal via onClose
@@ -38,6 +39,11 @@ function EditorModal({
 
         {/* BODY SECTION: Contains inputs for Title, Content, active Labels, and Image previews */}
         <div className="editor-body">
+          {readOnly && (
+            <div style={{ background: "var(--primary-ring)", color: "var(--accent)", borderRadius: "8px", padding: "7px 12px", fontSize: "12px", fontWeight: 600, marginBottom: "10px", display: "flex", alignItems: "center", gap: "6px" }}>
+              <i className="bi bi-eye-fill" /> You have view-only access to this note
+            </div>
+          )}
           {/* Title Input field */}
           <div className="editor-field">
             <label className="editor-label">Title</label>
@@ -45,7 +51,9 @@ function EditorModal({
               className="editor-title" 
               placeholder="Enter title..."
               value={activeNote.title}
-              onChange={e => setActiveNote({ ...activeNote, title: e.target.value })} 
+              onChange={e => !readOnly && setActiveNote({ ...activeNote, title: e.target.value })}
+              readOnly={readOnly}
+              style={readOnly ? { opacity: 0.7, cursor: "default" } : {}}
             />
           </div>
           
@@ -56,7 +64,9 @@ function EditorModal({
               className="editor-content" 
               placeholder="Start typing your note..."
               value={activeNote.content}
-              onChange={e => setActiveNote({ ...activeNote, content: e.target.value })} 
+              onChange={e => !readOnly && setActiveNote({ ...activeNote, content: e.target.value })}
+              readOnly={readOnly}
+              style={readOnly ? { opacity: 0.7, cursor: "default" } : {}}
             />
           </div>
 
@@ -66,7 +76,7 @@ function EditorModal({
               {activeNote.labels.map(lbl => (
                 <span key={lbl._id || lbl} className="editor-label-chip">
                   <i className="bi bi-tag-fill" /> {lbl.name || lbl}
-                  <button className="chip-remove-btn" onClick={() => onToggleLabelOnNote(lbl)} title="Remove label">×</button>
+                  {!readOnly && <button className="chip-remove-btn" onClick={() => onToggleLabelOnNote(lbl)} title="Remove label">×</button>}
                 </span>
               ))}
             </div>
@@ -98,29 +108,29 @@ function EditorModal({
           
           {/* Action trigger controls: Label picker dropdown, Image upload input, and Done button */}
           <div className="editor-actions">
-            {/* Label picker toggle button & dropdown container */}
-            <div className="label-picker-wrap">
-              <button className="footer-icon-btn" onClick={() => setShowLabelPicker(p => !p)} title="Add label">
-                <i className="bi bi-tag" />
-              </button>
-              {showLabelPicker && (
-                <LabelPickerDropdown
-                  labels={labels}
-                  activeNoteLabels={activeNote.labels || []}
-                  onToggle={onToggleLabelOnNote}
-                  onClose={() => setShowLabelPicker(false)}
-                  noteId={activeNote._id}
-                />
-              )}
-            </div>
-            
-            {/* Image upload button (styled label wrapping a hidden file input) */}
-            <label className={`upload-btn ${uploading ? "upload-btn--loading" : ""}`} title="Add image">
-              {uploading ? <><i className="bi bi-arrow-repeat spin" /> Uploading...</> : <><i className="bi bi-image" /> Add image</>}
-              <input type="file" accept="image/*" multiple hidden onChange={onImageUpload} disabled={uploading} />
-            </label>
-            
-            {/* Finish and exit button */}
+            {/* Label picker and image upload: hidden in readOnly mode */}
+            {!readOnly && (
+              <>
+                <div className="label-picker-wrap">
+                  <button className="footer-icon-btn" onClick={() => setShowLabelPicker(p => !p)} title="Add label">
+                    <i className="bi bi-tag" />
+                  </button>
+                  {showLabelPicker && (
+                    <LabelPickerDropdown
+                      labels={labels}
+                      activeNoteLabels={activeNote.labels || []}
+                      onToggle={onToggleLabelOnNote}
+                      onClose={() => setShowLabelPicker(false)}
+                      noteId={activeNote._id}
+                    />
+                  )}
+                </div>
+                <label className={`upload-btn ${uploading ? "upload-btn--loading" : ""}`} title="Add image">
+                  {uploading ? <><i className="bi bi-arrow-repeat spin" /> Uploading...</> : <><i className="bi bi-image" /> Add image</>}
+                  <input type="file" accept="image/*" multiple hidden onChange={onImageUpload} disabled={uploading} />
+                </label>
+              </>
+            )}
             <button className="editor-done-btn" onClick={onClose}>Done</button>
           </div>
         </div>
