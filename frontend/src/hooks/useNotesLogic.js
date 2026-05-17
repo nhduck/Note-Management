@@ -72,19 +72,31 @@ export function useNotesLogic() {
   useEffect(() => { fetchNotes();  }, [fetchNotes]);
   useEffect(() => { fetchLabels(); }, [fetchLabels]);
 
-  // Refresh the note list whenever another user saves a shared note.
-  // This keeps NoteCard previews on the home screen up to date in real time.
+  // Refresh the note list on any real-time event that changes note ownership
+  // or content. This keeps NoteCard previews up to date without a page reload.
   useEffect(() => {
     if (!profile) return;
 
     const socket = getSocket();
 
-    const handleNoteUpdated = () => {
-      fetchNotes();
-    };
+    // Handles: content update by another collaborator
+    const handleNoteUpdated = () => fetchNotes();
+
+    // Handles: a brand-new note was created (own notes list must refresh)
+    const handleNoteCreated = () => fetchNotes();
+
+    // Handles: a note was deleted (remove it from list immediately)
+    const handleNoteDeleted = () => fetchNotes();
 
     socket.on("note-updated", handleNoteUpdated);
-    return () => socket.off("note-updated", handleNoteUpdated);
+    socket.on("note-created", handleNoteCreated);
+    socket.on("note-deleted", handleNoteDeleted);
+
+    return () => {
+      socket.off("note-updated", handleNoteUpdated);
+      socket.off("note-created", handleNoteCreated);
+      socket.off("note-deleted", handleNoteDeleted);
+    };
   }, [profile, fetchNotes]);
 
   // Debounce the search input by 300 ms to avoid filtering on every keystroke

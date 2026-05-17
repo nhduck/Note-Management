@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { getSocket } from "../hooks/useSocket";
 import "../assets/HomeStyle.css";
 
 import { useNotesLogic } from "../hooks/useNotesLogic";
@@ -56,6 +57,26 @@ function HomePage() {
   }, [profile]);
 
   useEffect(() => { fetchSharedNotes(); }, [fetchSharedNotes]);
+
+  // ── Real-time: keep "Shared with me" list in sync ──
+  // Listen for share / unshare / delete events so the shared-notes section
+  // updates instantly without a manual refresh.
+  useEffect(() => {
+    if (!profile) return;
+    const socket = getSocket();
+
+    const refresh = () => fetchSharedNotes();
+
+    socket.on("note-shared",   refresh);  // someone just shared a note with me
+    socket.on("note-unshared", refresh);  // my access to a shared note was revoked
+    socket.on("note-deleted",  refresh);  // a shared note was deleted by its owner
+
+    return () => {
+      socket.off("note-shared",   refresh);
+      socket.off("note-unshared", refresh);
+      socket.off("note-deleted",  refresh);
+    };
+  }, [profile, fetchSharedNotes]);
 
   const handleSecuritySettings = () => setShowSecurityModal(true);
 
