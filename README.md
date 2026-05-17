@@ -166,20 +166,15 @@ Step C — Open the application:
 The following accounts have been created in the database with sample notes,
 labels, and shared content for evaluation purposes.
 
-  ┌─────────────────────────────────────────────────────────┐
-  │  Account 1 (Primary test account)                       │
-  │  Email:    pokemongo99113@gmail.com                     │
-  │  Password: Test@1234                                    │
-  │  Contains: sample notes, pinned notes, labeled notes,   │
-  │            password-protected notes, shared notes       │
-  └─────────────────────────────────────────────────────────┘
 
-  ┌─────────────────────────────────────────────────────────┐
-  │  Account 2 (Sharing recipient account)                  │
-  │  Email:    ldat21072006@gmail.com                       │
-  │  Password: 123456l@                                     │
-  │  Contains: notes shared from Account 1 (view + edit)    │
-  └─────────────────────────────────────────────────────────┘
+  Account 1
+  Email:    huynhduc9881@gmail.com
+  Password: Duc12345@
+  
+  
+  Account 2
+  Email:    duchoc12h@gmail.com
+  Password: Duc12345@
 
   Note for evaluators: To test real-time collaboration, log into Account 1
   in one browser (or tab) and Account 2 in another, then open the same
