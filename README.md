@@ -170,11 +170,13 @@ labels, and shared content for evaluation purposes.
   Account 1
   Email:    huynhduc9881@gmail.com
   Password: Duc12345@
+  Contains: sample notes, pinned notes, labeled notes, password-protected notes, shared notes
   
   
   Account 2
   Email:    duchoc12h@gmail.com
   Password: Duc12345@
+  Contains: notes shared from Account 1 (view + edit)
 
   Note for evaluators: To test real-time collaboration, log into Account 1
   in one browser (or tab) and Account 2 in another, then open the same
